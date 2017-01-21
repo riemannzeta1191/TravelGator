@@ -102,7 +102,7 @@ public class WebHookServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 
-		System.out.println("--->" + sb.toString());
+		System.out.println("----->" + sb.toString());
 
 		/**
 		 * convert the string request body in java object
@@ -115,28 +115,30 @@ public class WebHookServlet extends HttpServlet {
 		}
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
 		System.out.println(messagings);
+		System.out.println(messagings.size());
 		for (Messaging event : messagings) {
 			try {
 				String sender = event.getSender().getId();
 				Message msgObj = event.getMessage();
 				System.out.println(msgObj);
-				if (msgObj.getAttachment() != null) {
+				if (msgObj.getAttachments() != null) {
 
 					// Attachment is there. ignore the text ?
 					// Render only location as of now..
-					Attachment attach = msgObj.getAttachment();
-					if (attach.getType().equals(Constants.Types.location.name())) {
-						double latitude = attach.getPayload().getCoordinates().getLatitude();
-						double longitude = attach.getPayload().getCoordinates().getLongitude();
-						setGooglePlacesResponse(sender, latitude, longitude);
+					for (Attachment attach : msgObj.getAttachments()) {
+						if (attach.getType().equals(Constants.Types.location.name())) {
+							double latitude = attach.getPayload().getCoordinates().getLatitude();
+							double longitude = attach.getPayload().getCoordinates().getLongitude();
+							setGooglePlacesResponse(sender, latitude, longitude);
+							break;
+						}
 					}
-
 				} else if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
 					// welcome message.
 					handleWelcomeMessage(sender);
 					continue;
 				} else {
-
+					System.out.println("Else case !!");
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

@@ -12,7 +12,7 @@ public class Constants {
 		commands.add("NO");
 	}
 
-	static final String welcomeMessage = "Hello {0}! Welcome to Gator Knuckle. Please send your location to make the most out of your trip";
+	static final String welcomeMessage = "Howdy {0}! Gator Knuckle Reporting. Chime in your location to make the most out of this trip";
 	public static enum Types {
 		location
 	}

@@ -20,6 +20,7 @@ import gator.fb.contract.Payload;
 import gator.fb.contract.Recipient;
 import gator.fb.profile.FbProfile;
 import gator.fb.servlet.WebHookServlet;
+import gator.google.places.PlacesAPI;
 
 /**
  * A Utility class which replies to fb messgaes (or postbacks).<br/>
@@ -286,6 +287,12 @@ public class FbChatHelper {
 	}
 
 	public String getGooglePlacesRes(String senderId, double latitude, double longitude) {
+		try {
+			System.out.println(PlacesAPI.getNearbyPlaces(latitude, longitude));
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		String msgText = "Your lat is " + latitude + "Your long is " + longitude + ".";
 		return getJsonReply(senderId, getMsg(msgText));
 	}
