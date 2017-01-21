@@ -1,6 +1,7 @@
 
 ###TODO
 - Get google API key.
+AIzaSyCXWBHckGfNWwlrymhKdU5VuPkMWaVwbmg **SECRET**
 
 **Place Search API.**
 https://developers.google.com/places/web-service/search
