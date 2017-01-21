@@ -102,6 +102,8 @@ public class WebHookServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 
+		System.out.println("--->" + sb.toString());
+
 		/**
 		 * convert the string request body in java object
 		 */
@@ -112,12 +114,12 @@ public class WebHookServlet extends HttpServlet {
 			return;
 		}
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
-
+		System.out.println(messagings);
 		for (Messaging event : messagings) {
 			try {
 				String sender = event.getSender().getId();
 				Message msgObj = event.getMessage();
-
+				System.out.println(msgObj);
 				if (msgObj.getAttachment() != null) {
 
 					// Attachment is there. ignore the text ?
