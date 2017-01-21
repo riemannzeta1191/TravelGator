@@ -114,8 +114,7 @@ public class FbChatHelper {
 		String link = StringUtils.replace(profileLink, "SENDER_ID", senderId);
 		FbProfile profile = getObjectFromUrl(link, FbProfile.class);
 
-		String msg = "Hello " + profile.getFirstName()
-				+ ", I've received msg: " + text;
+		String msg = "Hello " + profile.getFirstName() + ", I've received msg: " + text;
 		Message fbMsg = getMsg(msg);
 		String fbReply = getJsonReply(senderId, fbMsg);
 		replies.add(fbReply);
@@ -258,8 +257,7 @@ public class FbChatHelper {
 		String jsonString = "";
 		try {
 			url = new URL(link);
-			BufferedReader in = new BufferedReader(new InputStreamReader(
-					url.openStream()));
+			BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()));
 
 			String inputLine;
 			while ((inputLine = in.readLine()) != null) {
