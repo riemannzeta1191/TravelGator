@@ -121,7 +121,6 @@ public class WebHookServlet extends HttpServlet {
 				if (msgObj.getAttachment() != null) {
 
 					// Attachment is there. ignore the text ?
-
 					// Render only location as of now..
 					Attachment attach = msgObj.getAttachment();
 					if (attach.getType().equals(Constants.Types.location.name())) {
@@ -148,7 +147,7 @@ public class WebHookServlet extends HttpServlet {
 
 	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
 		HttpEntity entity = new ByteArrayEntity(
-				("Your lat is " + latitude + "Your long is " + longitude + ".").getBytes("UTF-8"));
+				(helper.getGooglePlacesRes(senderId, latitude, longitude)).getBytes("UTF-8"));
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
 		String result = EntityUtils.toString(response.getEntity());

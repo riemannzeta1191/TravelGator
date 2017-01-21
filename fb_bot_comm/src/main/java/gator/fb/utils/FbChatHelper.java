@@ -129,7 +129,7 @@ public class FbChatHelper {
 	public String getWelcomeMsg(String senderId) {
 		String link = StringUtils.replace(profileLink, "SENDER_ID", senderId);
 		FbProfile profile = getObjectFromUrl(link, FbProfile.class);
-		return Constants.welcomeMessage.replace("{0}", profile.getFirstName());
+		return getJsonReply(senderId, getMsg(Constants.welcomeMessage.replace("{0}", profile.getFirstName())));
 	}
 
 	private Message getMsg(String msg) {
@@ -186,6 +186,12 @@ public class FbChatHelper {
 		return message;
 	}
 
+	Recipient getRecipient(String senderId) {
+		Recipient recipient = new Recipient();
+		recipient.setId(senderId);
+		return recipient;
+	}
+
 	/**
 	 * final body which will be sent to fb messenger api through a post call
 	 * 
@@ -195,10 +201,8 @@ public class FbChatHelper {
 	 * @return
 	 */
 	private String getJsonReply(String senderId, Message message) {
-		Recipient recipient = new Recipient();
-		recipient.setId(senderId);
 		Messaging reply = new Messaging();
-		reply.setRecipient(recipient);
+		reply.setRecipient(getRecipient(senderId));
 		reply.setMessage(message);
 
 		String jsonReply = new Gson().toJson(reply);
@@ -279,5 +283,10 @@ public class FbChatHelper {
 			t = gson.fromJson(jsonString, clazz);
 		}
 		return t;
+	}
+
+	public String getGooglePlacesRes(String senderId, double latitude, double longitude) {
+		String msgText = "Your lat is " + latitude + "Your long is " + longitude + ".";
+		return getJsonReply(senderId, getMsg(msgText));
 	}
 }
