@@ -22,8 +22,11 @@ import org.apache.http.util.EntityUtils;
 
 import com.google.gson.Gson;
 
+import gator.fb.contract.Attachment;
 import gator.fb.contract.FbMsgRequest;
+import gator.fb.contract.Message;
 import gator.fb.contract.Messaging;
+import gator.fb.utils.Constants;
 import gator.fb.utils.FbChatHelper;
 
 /**
@@ -109,19 +112,57 @@ public class WebHookServlet extends HttpServlet {
 			return;
 		}
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
+
 		for (Messaging event : messagings) {
-			System.out.println(event);
-			String sender = event.getSender().getId();
-			if (event.getMessage() != null && event.getMessage().getText() != null) {
-				String text = event.getMessage().getText();
-				sendTextMessage(sender, text, false);
-			} else if (event.getPostback() != null) {
-				String text = event.getPostback().getPayload();
-				System.out.println("postback received: " + text);
-				sendTextMessage(sender, text, true);
+			try {
+				String sender = event.getSender().getId();
+				Message msgObj = event.getMessage();
+
+				if (msgObj.getAttachment() != null) {
+
+					// Attachment is there. ignore the text ?
+
+					// Render only location as of now..
+					Attachment attach = msgObj.getAttachment();
+					if (attach.getType().equals(Constants.Types.location.name())) {
+						double latitude = attach.getPayload().getCoordinates().getLatitude();
+						double longitude = attach.getPayload().getCoordinates().getLongitude();
+						setGooglePlacesResponse(sender, latitude, longitude);
+					}
+
+				} else if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
+					// welcome message.
+					handleWelcomeMessage(sender);
+					continue;
+				} else {
+
+				}
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			}
 		}
+
 		response.setStatus(HttpServletResponse.SC_OK);
+	}
+
+	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
+		HttpEntity entity = new ByteArrayEntity(
+				("Your lat is " + latitude + "Your long is " + longitude + ".").getBytes("UTF-8"));
+		httppost.setEntity(entity);
+		HttpResponse response = client.execute(httppost);
+		String result = EntityUtils.toString(response.getEntity());
+		if (Constants.isDebugEnabled)
+			System.out.println(result);
+	}
+
+	private void handleWelcomeMessage(String senderId) throws Exception {
+		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
+		httppost.setEntity(entity);
+		HttpResponse response = client.execute(httppost);
+		String result = EntityUtils.toString(response.getEntity());
+		if (Constants.isDebugEnabled)
+			System.out.println(result);
 	}
 
 	/**
@@ -132,7 +173,8 @@ public class WebHookServlet extends HttpServlet {
 	 * @param text
 	 * @param isPostBack
 	 */
-	private void sendTextMessage(String senderId, String text, boolean isPostBack) {
+	private void sendTextMessage(String senderId, String text, boolean isPostBack) throws Exception {
+
 		List<String> jsonReplies = null;
 		if (isPostBack) {
 			jsonReplies = helper.getPostBackReplies(senderId, text);
@@ -141,20 +183,11 @@ public class WebHookServlet extends HttpServlet {
 		}
 
 		for (String jsonReply : jsonReplies) {
-			try {
-				HttpEntity entity = new ByteArrayEntity(jsonReply.getBytes("UTF-8"));
-				httppost.setEntity(entity);
-				HttpResponse response = client.execute(httppost);
-				String result = EntityUtils.toString(response.getEntity());
-				System.out.println(result);
-			} catch (UnsupportedEncodingException e) {
-				e.printStackTrace();
-			} catch (ClientProtocolException e) {
-				e.printStackTrace();
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
+			HttpEntity entity = new ByteArrayEntity(jsonReply.getBytes("UTF-8"));
+			httppost.setEntity(entity);
+			HttpResponse response = client.execute(httppost);
+			String result = EntityUtils.toString(response.getEntity());
+			System.out.println(result);
 		}
 	}
 

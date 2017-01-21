@@ -11,6 +11,14 @@ import com.google.gson.annotations.SerializedName;
 @Generated("org.jsonschema2pojo")
 public class Payload {
 
+	public Coordinates getCoordinates() {
+		return coordinates;
+	}
+
+	public void setCoordinates(Coordinates coordinates) {
+		this.coordinates = coordinates;
+	}
+
 	@SerializedName("template_type")
 	@Expose
 	private String templateType;
@@ -24,6 +32,10 @@ public class Payload {
 	@Expose
 	private List<Button> buttons;
 
+	@SerializedName("coordinates")
+	@Expose
+	private Coordinates coordinates;
+	
 	public List<Button> getButtons() {
 		return buttons;
 	}

@@ -126,6 +126,12 @@ public class FbChatHelper {
 		return replies;
 	}
 
+	public String getWelcomeMsg(String senderId) {
+		String link = StringUtils.replace(profileLink, "SENDER_ID", senderId);
+		FbProfile profile = getObjectFromUrl(link, FbProfile.class);
+		return Constants.welcomeMessage.replace("{0}", profile.getFirstName());
+	}
+
 	private Message getMsg(String msg) {
 		Message message = new Message();
 		message.setText(msg);
