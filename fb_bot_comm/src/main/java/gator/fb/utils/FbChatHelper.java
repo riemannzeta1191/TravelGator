@@ -29,7 +29,7 @@ import gator.fb.servlet.WebHookServlet;
  * 
  * A Service can be a search engine for music or a help desk of a company.
  * 
- * @author siddharth
+ * @author takirala
  *
  */
 public class FbChatHelper {
