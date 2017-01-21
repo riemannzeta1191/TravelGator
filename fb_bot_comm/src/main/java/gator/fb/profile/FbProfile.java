@@ -1,4 +1,4 @@
-package in.strollup.fb.profile;
+package gator.fb.profile;
 
 import javax.annotation.Generated;
 

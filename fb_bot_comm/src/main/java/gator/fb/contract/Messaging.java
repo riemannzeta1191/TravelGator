@@ -1,4 +1,4 @@
-package in.strollup.fb.contract;
+package gator.fb.contract;
 
 import javax.annotation.Generated;
 import org.apache.commons.lang3.builder.EqualsBuilder;

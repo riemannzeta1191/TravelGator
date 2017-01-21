@@ -1,11 +1,11 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>in.strollup.fb</groupId>
+	<groupId>gator.fb</groupId>
 	<artifactId>bot</artifactId>
 	<packaging>war</packaging>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>Java-FbChatBot</name>
+	<name>GatorKnuckle</name>
 	<url>http://maven.apache.org</url>
 	<dependencies>
 		<dependency>
@@ -34,35 +34,6 @@
 	<build>
 		<plugins>
 			<plugin>
-				<groupId>org.codehaus.mojo</groupId>
-				<version>1.5</version>
-				<artifactId>keytool-maven-plugin</artifactId>
-				<executions>
-					<execution>
-						<phase>generate-resources</phase>
-						<id>clean</id>
-						<goals>
-							<goal>clean</goal>
-						</goals>
-					</execution>
-					<execution>
-						<phase>generate-resources</phase>
-						<id>generateKeyPair</id>
-						<goals>
-							<goal>generateKeyPair</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<keystore>${project.build.directory}/jetty-ssl.keystore</keystore>
-					<dname>cn=my.hostname.tld</dname><!-- put your CN here -->
-					<keypass>jetty6</keypass>
-					<storepass>jetty6</storepass>
-					<alias>jetty6</alias>
-					<keyalg>RSA</keyalg>
-				</configuration>
-			</plugin>
-			<plugin>
 				<groupId>org.mortbay.jetty</groupId>
 				<artifactId>maven-jetty-plugin</artifactId>
 				<version>6.1.10</version>
@@ -70,15 +41,8 @@
 					<scanIntervalSeconds>10</scanIntervalSeconds>
 					<connectors>
 						<connector implementation="org.mortbay.jetty.nio.SelectChannelConnector">
-							<port>8080</port>
+							<port>9070</port>
 							<maxIdleTime>60000</maxIdleTime>
-						</connector>
-						<connector implementation="org.mortbay.jetty.security.SslSocketConnector">
-							<port>8443</port>
-							<maxIdleTime>60000</maxIdleTime>
-							<keystore>${project.build.directory}/jetty-ssl.keystore</keystore>
-							<password>jetty6</password>
-							<keyPassword>jetty6</keyPassword>
 						</connector>
 					</connectors>
 				</configuration>

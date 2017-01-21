@@ -3,10 +3,9 @@
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
-	<display-name>Fb Webhook in java by thekosmix</display-name>
 	<servlet>
 		<servlet-name>WebHookServlet</servlet-name>
-		<servlet-class>in.strollup.fb.servlet.WebHookServlet</servlet-class>
+		<servlet-class>gator.fb.servlet.WebHookServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>WebHookServlet</servlet-name>

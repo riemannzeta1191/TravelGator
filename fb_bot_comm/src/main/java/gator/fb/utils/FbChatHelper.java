@@ -1,14 +1,4 @@
-package in.strollup.fb.utils;
-
-import in.strollup.fb.contract.Attachment;
-import in.strollup.fb.contract.Button;
-import in.strollup.fb.contract.Element;
-import in.strollup.fb.contract.Message;
-import in.strollup.fb.contract.Messaging;
-import in.strollup.fb.contract.Payload;
-import in.strollup.fb.contract.Recipient;
-import in.strollup.fb.profile.FbProfile;
-import in.strollup.fb.servlet.WebHookServlet;
+package gator.fb.utils;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -20,6 +10,16 @@ import java.util.List;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.gson.Gson;
+
+import gator.fb.contract.Attachment;
+import gator.fb.contract.Button;
+import gator.fb.contract.Element;
+import gator.fb.contract.Message;
+import gator.fb.contract.Messaging;
+import gator.fb.contract.Payload;
+import gator.fb.contract.Recipient;
+import gator.fb.profile.FbProfile;
+import gator.fb.servlet.WebHookServlet;
 
 /**
  * A Utility class which replies to fb messgaes (or postbacks).<br/>

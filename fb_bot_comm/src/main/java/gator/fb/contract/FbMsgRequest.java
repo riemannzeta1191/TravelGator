@@ -1,5 +1,5 @@
 
-package in.strollup.fb.contract;
+package gator.fb.contract;
 
 import java.util.ArrayList;
 import java.util.List;

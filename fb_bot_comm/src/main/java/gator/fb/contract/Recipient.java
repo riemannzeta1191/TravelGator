@@ -1,5 +1,5 @@
 
-package in.strollup.fb.contract;
+package gator.fb.contract;
 
 import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
