@@ -19,6 +19,8 @@ public class PlacesAPI {
 	static final String API_KEY = "AIzaSyCXWBHckGfNWwlrymhKdU5VuPkMWaVwbmg";
 	static final String NEARBY_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
 
+	static final String API_KEY_PHOTO = "AIzaSyB7_drW4kjos6Y-OVk8jLs7h6CwkprrkV4";
+
 	private static final HttpClient client = HttpClientBuilder.create().build();
 	private static final HttpGet httpGet = new HttpGet(NEARBY_URL + API_KEY);
 
@@ -33,11 +35,9 @@ public class PlacesAPI {
 		System.out.println(httpGet.getURI());
 
 		String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-		System.out.println(body);
 
 		NearbyResponse nearbyResponse = new Gson().fromJson(body, NearbyResponse.class);
 		System.out.println(nearbyResponse.getResults().size());
-		return null;
+		return nearbyResponse;
 	}
-
 }

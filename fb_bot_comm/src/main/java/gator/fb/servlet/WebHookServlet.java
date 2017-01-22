@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -28,6 +29,7 @@ import gator.fb.contract.Message;
 import gator.fb.contract.Messaging;
 import gator.fb.utils.Constants;
 import gator.fb.utils.FbChatHelper;
+import gator.google.contract.NearbyResponse;
 
 /**
  * 
@@ -49,6 +51,8 @@ public class WebHookServlet extends HttpServlet {
 	private static final HttpClient client = HttpClientBuilder.create().build();
 	private static final HttpPost httppost = new HttpPost(FB_MSG_URL);
 	private static final FbChatHelper helper = new FbChatHelper();
+
+	private static ConcurrentHashMap<String, String> userState = new ConcurrentHashMap<>();
 
 	/*************************************************************/
 
@@ -91,10 +95,16 @@ public class WebHookServlet extends HttpServlet {
 		return;
 	}
 
+	static final class UserState {
+		final static String welcome_sent = "welcome_sent";
+		final static String location_received = "location_received";
+		final static String processing_locations = "processing_locations";
+	}
+
 	private void processRequest(HttpServletRequest httpRequest, HttpServletResponse response)
 			throws IOException, ServletException {
 		/**
-		 * store the request body in stringbuffer
+		 * store the request body in string buffer
 		 */
 		StringBuffer sb = new StringBuffer();
 		String line = null;
@@ -121,25 +131,53 @@ public class WebHookServlet extends HttpServlet {
 		System.out.println(messagings);
 		System.out.println(messagings.size());
 		for (Messaging event : messagings) {
-			try {
-				String sender = event.getSender().getId();
-				Message msgObj = event.getMessage();
-				System.out.println(msgObj);
-				if (msgObj.getAttachments() != null) {
 
-					// Attachment is there. ignore the text ?
-					// Render only location as of now..
-					for (Attachment attach : msgObj.getAttachments()) {
-						if (attach.getType().equals(Constants.Types.location.name())) {
-							double latitude = attach.getPayload().getCoordinates().getLatitude();
-							double longitude = attach.getPayload().getCoordinates().getLongitude();
-							setGooglePlacesResponse(sender, latitude, longitude);
-							break;
+			try {
+				String senderID = event.getSender().getId();
+
+				String prevState = userState.get(senderID);
+
+				if (prevState == null) {
+					handleWelcomeMessage(senderID);
+					userState.put(senderID, UserState.welcome_sent);
+					break;
+				}
+
+				Message msgObj = event.getMessage();
+
+				switch (prevState) {
+
+				case UserState.welcome_sent:
+					// we got the location.
+					// send places one by one.
+					if (msgObj.getAttachments() != null) {
+
+						// Attachment is there. ignore the text ?
+						// Render only location as of now..
+						for (Attachment attach : msgObj.getAttachments()) {
+							if (attach.getType().equals(Constants.Types.location.name())) {
+								double latitude = attach.getPayload().getCoordinates().getLatitude();
+								double longitude = attach.getPayload().getCoordinates().getLongitude();
+								setGooglePlacesResponse(senderID, latitude, longitude);
+								break;
+							}
 						}
 					}
-				} else if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
+					userState.put(senderID, UserState.processing_locations);
+					break;
+
+				case UserState.processing_locations:
+
+					break;
+
+				default:
+					break;
+				}
+
+				System.out.println(msgObj);
+				if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
 					// welcome message.
-					handleWelcomeMessage(sender);
+
 					continue;
 				} else {
 					System.out.println("Else case !!");
@@ -154,8 +192,10 @@ public class WebHookServlet extends HttpServlet {
 	}
 
 	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
-		HttpEntity entity = new ByteArrayEntity(
-				(helper.getGooglePlacesRes(senderId, latitude, longitude)).getBytes("UTF-8"));
+
+		String res = helper.getGooglePlacesRes(senderId, latitude, longitude);
+
+		HttpEntity entity = new ByteArrayEntity(((String) res).getBytes("UTF-8"));
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
 		String result = EntityUtils.toString(response.getEntity());
@@ -164,10 +204,12 @@ public class WebHookServlet extends HttpServlet {
 	}
 
 	private void handleWelcomeMessage(String senderId) throws Exception {
+		System.out.println("Welcome : " + senderId);
 		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
 		String result = EntityUtils.toString(response.getEntity());
+		
 		if (Constants.isDebugEnabled)
 			System.out.println(result);
 	}

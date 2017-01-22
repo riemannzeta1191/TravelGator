@@ -6,6 +6,8 @@ import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,10 +15,12 @@ import com.google.gson.Gson;
 
 import gator.fb.contract.Attachment;
 import gator.fb.contract.Button;
+import gator.fb.contract.DefaultAction;
 import gator.fb.contract.Element;
 import gator.fb.contract.Message;
 import gator.fb.contract.Messaging;
 import gator.fb.contract.Payload;
+import gator.fb.contract.QuickReply;
 import gator.fb.contract.Recipient;
 import gator.fb.profile.FbProfile;
 import gator.fb.servlet.WebHookServlet;
@@ -133,8 +137,10 @@ public class FbChatHelper {
 		String link = StringUtils.replace(profileLink, "SENDER_ID", senderId);
 		FbProfile profile = getObjectFromUrl(link, FbProfile.class);
 		Message msg = getMsg(Constants.welcomeMessage.replace("{0}", profile.getFirstName()));
-		List<String> quick_replies = new ArrayList<>();
-		quick_replies.add(Constants.Types.location.name());
+		List<QuickReply> quick_replies = new ArrayList<>();
+		QuickReply qr = new QuickReply();
+		qr.setContent_type(Constants.Types.location.name());
+		quick_replies.add(qr);
 		msg.setQuick_replies(quick_replies);
 		return getJsonReply(senderId, msg);
 	}
@@ -292,22 +298,43 @@ public class FbChatHelper {
 		return t;
 	}
 
+	private static ConcurrentHashMap<String, NearbyResponse> userRecommendations = new ConcurrentHashMap<>();
+
 	public String getGooglePlacesRes(String senderId, double latitude, double longitude) {
+		if (Constants.isDebugEnabled)
+			System.out.println("Get google res for : " + senderId);
 		Message msg = new Message();
+
 		try {
-			List<Result> res = PlacesAPI.getNearbyPlaces(latitude, longitude).getResults();
+			NearbyResponse nearbyResponse = userRecommendations.get(senderId);
+			if (nearbyResponse == null) {
+				nearbyResponse = PlacesAPI.getNearbyPlaces(latitude, longitude);
+				userRecommendations.put(senderId, nearbyResponse);
+			}
+
+			List<Result> res = nearbyResponse.getResults();
 
 			List<Element> elems = new ArrayList<Element>();
-			for (Result r : res) {
-				elems.add(buildElement(r));
+			if (res.size() == 0) {
+
+			} else {
+				Result next = res.get(0);
+				res.remove(0);
+				elems.add(buildElement(next));
 			}
-			
+
+			msg.setAttachment(new Attachment());
+			msg.getAttachment().setType(Constants.Types.template.name());
+			msg.getAttachment().setPayload(new Payload());
+			msg.getAttachment().getPayload().setTemplateType(Constants.Types.generic.name());
+			msg.getAttachment().getPayload().setElements(elems);
+			if (Constants.isDebugEnabled)
+				System.out.println(msg.toString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		String msgText = "Your lat is " + latitude + "Your long is " + longitude + ".";
-		return getJsonReply(senderId, getMsg(msgText));
+		return getJsonReply(senderId, msg);
 	}
 
 	private Element buildElement(Result r) {
@@ -315,7 +342,12 @@ public class FbChatHelper {
 		e.setTitle(r.getName());
 		e.setImageUrl(r.getIcon());
 		e.setSubtitle(getSubtitle(r));
-		e.setButtons(addButtons(r.getPlace_id()));
+		DefaultAction default_action = new DefaultAction();
+		default_action.setType(Constants.Types.web_url.name());
+		default_action.setWebview_height_ratio(Constants.Heights.full.name());
+		default_action.setUrl(r.getIcon());
+		e.setDefault_action(default_action);
+		e.setButtons(addButton(r.getPlace_id()));
 		return e;
 	}
 
@@ -323,34 +355,21 @@ public class FbChatHelper {
 
 		String res = "Located in the vicinity of {vicinity}. Rated {rating} and has {reviews} reviews. People generally spend around {timeSpent} here.";
 
-		res.replace("{vicintiy}", r.getVicinity());
-		res.replace("{rating}", r.getVicinity());
-		res.replace("{reviews}", r.getVicinity());
-		res.replace("{timeSpent}", r.getTimeSpent());
+		res = res.replace("{vicinity}", r.getVicinity());
+		res = res.replace("{rating}", "" + r.getRating());
+		res = res.replace("{reviews}", "" + new Random().nextInt(100));
+		res = res.replace("{timeSpent}", "" + (new Random().nextInt(10) + 1) / 2.0);
 
 		return res;
 	}
 
-	private List<Button> addButtons(String place_id) {
+	private List<Button> addButton(String place_id) {
 		List<Button> buttons = new ArrayList<>();
 		Button b1 = new Button();
-		b1.setTitle("Sure!");
-		b1.setPayload("placeId_res " + 1 + " " + place_id);
+		b1.setTitle("Add");
+		b1.setPayload("placeId_res " + place_id);
 		b1.setType(Constants.Types.postback.name());
-
-		Button b2 = new Button();
-		b2.setTitle("Maybe?");
-		b2.setPayload("placeId_res " + 0 + " " + place_id);
-		b2.setType(Constants.Types.postback.name());
-
-		Button b3 = new Button();
-		b3.setTitle("Meh.");
-		b3.setPayload("placeId_res " + -1 + " " + place_id);
-		b3.setType(Constants.Types.postback.name());
-
 		buttons.add(b1);
-		buttons.add(b2);
-		buttons.add(b3);
 		return buttons;
 	}
 

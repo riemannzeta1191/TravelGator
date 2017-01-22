@@ -82,6 +82,17 @@ public class Result {
 	@Expose
 	private Geometry geometry;
 
+	@SerializedName("rating")
+	@Expose
+	private double rating;
+
+	public double getRating() {
+		return rating;
+	}
+
+	public void setRating(double rating) {
+		this.rating = rating;
+	}
 
 	private String timeSpent = "1";
 
