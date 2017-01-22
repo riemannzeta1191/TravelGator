@@ -132,7 +132,9 @@ public class WebHookServlet extends HttpServlet {
 		System.out.println(messagings.size());
 
 		forLoop: for (Messaging event : messagings) {
-
+			if (event == null)
+				continue;
+			
 			try {
 				String senderID = event.getSender().getId();
 
@@ -180,7 +182,7 @@ public class WebHookServlet extends HttpServlet {
 					break;
 				default:
 					System.out.println("default acse");
-					
+
 					break;
 				}
 
