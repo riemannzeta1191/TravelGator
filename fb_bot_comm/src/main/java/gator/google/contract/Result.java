@@ -42,6 +42,14 @@ public class Result {
 		this.vicinity = vicinity;
 	}
 
+	public Geometry getGeometry() {
+		return geometry;
+	}
+
+	public void setGeometry(Geometry geometry) {
+		this.geometry = geometry;
+	}
+
 	@SerializedName("name")
 	@Expose
 	private String name;
@@ -57,5 +65,9 @@ public class Result {
 	@SerializedName("vicinity")
 	@Expose
 	private String vicinity;
+
+	@SerializedName("geometry")
+	@Expose
+	private Geometry geometry;
 
 }
