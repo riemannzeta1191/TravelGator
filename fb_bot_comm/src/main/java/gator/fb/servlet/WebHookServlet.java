@@ -52,6 +52,10 @@ public class WebHookServlet extends HttpServlet {
 
 	/*************************************************************/
 
+	final String caretURL = "https://graph.facebook.com/v2.6/me/thread_settings?access_token=" + PAGE_TOKEN;
+
+	/*************************************************************/
+
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
 			throws ServletException, IOException {
@@ -203,5 +207,11 @@ public class WebHookServlet extends HttpServlet {
 	public void init() throws ServletException {
 		httppost.setHeader("Content-Type", "application/json");
 		System.out.println("webhook servlet created!!");
+		setCaret();
 	}
+
+	public void setCaret() {
+
+	}
+
 }
