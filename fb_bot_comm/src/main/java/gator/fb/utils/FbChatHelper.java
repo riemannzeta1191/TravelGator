@@ -415,4 +415,8 @@ public class FbChatHelper {
 		return buttons;
 	}
 
+	public void clearUserSenderID(String senderID) {
+		userRecommendations.remove(senderID);
+	}
+
 }

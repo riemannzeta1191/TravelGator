@@ -145,6 +145,12 @@ public class WebHookServlet extends HttpServlet {
 
 				Message msgObj = event.getMessage();
 
+				if (msgObj != null && msgObj.getText().equals("clear")) {
+					userState.remove(senderID);
+					helper.clearUserSenderID(senderID);
+					break;
+				}
+
 				switch (prevState) {
 
 				case UserState.welcome_sent:
