@@ -2,8 +2,8 @@ package gator.fb.servlet;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServlet;
@@ -13,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -26,8 +25,10 @@ import gator.fb.contract.Attachment;
 import gator.fb.contract.FbMsgRequest;
 import gator.fb.contract.Message;
 import gator.fb.contract.Messaging;
+import gator.fb.contract.Postback;
 import gator.fb.utils.Constants;
 import gator.fb.utils.FbChatHelper;
+import gator.google.contract.NearbyResponse;
 
 /**
  * 
@@ -49,6 +50,9 @@ public class WebHookServlet extends HttpServlet {
 	private static final HttpClient client = HttpClientBuilder.create().build();
 	private static final HttpPost httppost = new HttpPost(FB_MSG_URL);
 	private static final FbChatHelper helper = new FbChatHelper();
+
+	private static ConcurrentHashMap<String, String> userState = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<String, NearbyResponse> userRecommendations = new ConcurrentHashMap<>();
 
 	/*************************************************************/
 
@@ -91,10 +95,16 @@ public class WebHookServlet extends HttpServlet {
 		return;
 	}
 
+	static final class UserState {
+		final static String welcome_sent = "welcome_sent";
+		final static String location_received = "location_received";
+		final static String processing_locations = "processing_locations";
+	}
+
 	private void processRequest(HttpServletRequest httpRequest, HttpServletResponse response)
 			throws IOException, ServletException {
 		/**
-		 * store the request body in stringbuffer
+		 * store the request body in string buffer
 		 */
 		StringBuffer sb = new StringBuffer();
 		String line = null;
@@ -121,28 +131,47 @@ public class WebHookServlet extends HttpServlet {
 		System.out.println(messagings);
 		System.out.println(messagings.size());
 		for (Messaging event : messagings) {
-			try {
-				String sender = event.getSender().getId();
-				Message msgObj = event.getMessage();
-				System.out.println(msgObj);
-				if (msgObj.getAttachments() != null) {
 
-					// Attachment is there. ignore the text ?
+			try {
+				String senderID = event.getSender().getId();
+
+				Message msgObj = event.getMessage();
+				Postback postback = event.getPostback();
+
+				if (msgObj == null && postback == null) {
+					System.err.println("No msg or postback. return");
+					return;
+				}
+
+				if (msgObj != null && msgObj.getText() != null && msgObj.getText().equals("clear")) {
+					userState.remove(senderID);
+					userRecommendations.remove(senderID);
+					break;
+				}
+
+				if (postback == null && msgObj.getAttachments() == null) {
+					handleWelcomeMessage(senderID);
+					userState.put(senderID, UserState.welcome_sent);
+					break;
+				} else if (postback == null && msgObj.getAttachments() != null) {
+
+					// we now have the location.
+					// send places one by one.
+					// Attachment is there. ignore the text.
 					// Render only location as of now..
 					for (Attachment attach : msgObj.getAttachments()) {
 						if (attach.getType().equals(Constants.Types.location.name())) {
 							double latitude = attach.getPayload().getCoordinates().getLatitude();
 							double longitude = attach.getPayload().getCoordinates().getLongitude();
-							setGooglePlacesResponse(sender, latitude, longitude);
+							setGooglePlacesResponse(senderID, latitude, longitude);
+							userState.put(senderID, UserState.processing_locations);
 							break;
 						}
 					}
-				} else if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
-					// welcome message.
-					handleWelcomeMessage(sender);
-					continue;
+				} else if (postback != null) {
+					processUserRecommendations(senderID, postback.getPayload());
 				} else {
-					System.out.println("Else case !!");
+					System.err.println("Ayyo :(");
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
@@ -153,21 +182,41 @@ public class WebHookServlet extends HttpServlet {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 
+	private void processUserRecommendations(String senderId, String payloadMessage) throws Exception {
+		List<String> res = helper.processUserRecommendations(senderId, payloadMessage, userRecommendations);
+		for (String r : res) {
+
+			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
+			httppost.setEntity(entity);
+			HttpResponse response = client.execute(httppost);
+			String result = EntityUtils.toString(response.getEntity());
+			if (Constants.isDebugEnabled)
+				System.out.println(result);
+		}
+	}
+
 	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
-		HttpEntity entity = new ByteArrayEntity(
-				(helper.getGooglePlacesRes(senderId, latitude, longitude)).getBytes("UTF-8"));
-		httppost.setEntity(entity);
-		HttpResponse response = client.execute(httppost);
-		String result = EntityUtils.toString(response.getEntity());
-		if (Constants.isDebugEnabled)
-			System.out.println(result);
+
+		List<String> res = helper.getGooglePlacesRes(senderId, latitude, longitude, userRecommendations);
+
+		for (String r : res) {
+
+			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
+			httppost.setEntity(entity);
+			HttpResponse response = client.execute(httppost);
+			String result = EntityUtils.toString(response.getEntity());
+			if (Constants.isDebugEnabled)
+				System.out.println(result);
+		}
 	}
 
 	private void handleWelcomeMessage(String senderId) throws Exception {
+		System.out.println("Welcome : " + senderId);
 		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
 		String result = EntityUtils.toString(response.getEntity());
+
 		if (Constants.isDebugEnabled)
 			System.out.println(result);
 	}
@@ -180,7 +229,7 @@ public class WebHookServlet extends HttpServlet {
 	 * @param text
 	 * @param isPostBack
 	 */
-	private void sendTextMessage(String senderId, String text, boolean isPostBack) throws Exception {
+	public void sendTextMessage(String senderId, String text, boolean isPostBack) throws Exception {
 
 		List<String> jsonReplies = null;
 		if (isPostBack) {

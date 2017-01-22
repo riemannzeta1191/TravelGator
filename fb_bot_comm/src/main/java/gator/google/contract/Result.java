@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.annotation.Generated;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -65,10 +67,22 @@ public class Result {
 	@SerializedName("vicinity")
 	@Expose
 	private String vicinity;
-	
+
 	@SerializedName("icon")
 	@Expose
 	private String icon;
+
+	public List<Photo> getPhotos() {
+		return photos;
+	}
+
+	public void setPhotos(List<Photo> photos) {
+		this.photos = photos;
+	}
+
+	@SerializedName("photos")
+	@Expose
+	private List<Photo> photos;
 
 	public String getIcon() {
 		return icon;
@@ -81,8 +95,18 @@ public class Result {
 	@SerializedName("geometry")
 	@Expose
 	private Geometry geometry;
-	
-	
+
+	@SerializedName("rating")
+	@Expose
+	private double rating;
+
+	public double getRating() {
+		return rating;
+	}
+
+	public void setRating(double rating) {
+		this.rating = rating;
+	}
 
 	private String timeSpent = "1";
 
@@ -93,5 +117,10 @@ public class Result {
 	public void setTimeSpent(String timeSpent) {
 		this.timeSpent = timeSpent;
 	}
-	
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
+	}
+
 }

@@ -4,8 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -13,10 +16,12 @@ import com.google.gson.Gson;
 
 import gator.fb.contract.Attachment;
 import gator.fb.contract.Button;
+import gator.fb.contract.DefaultAction;
 import gator.fb.contract.Element;
 import gator.fb.contract.Message;
 import gator.fb.contract.Messaging;
 import gator.fb.contract.Payload;
+import gator.fb.contract.QuickReply;
 import gator.fb.contract.Recipient;
 import gator.fb.profile.FbProfile;
 import gator.fb.servlet.WebHookServlet;
@@ -133,8 +138,10 @@ public class FbChatHelper {
 		String link = StringUtils.replace(profileLink, "SENDER_ID", senderId);
 		FbProfile profile = getObjectFromUrl(link, FbProfile.class);
 		Message msg = getMsg(Constants.welcomeMessage.replace("{0}", profile.getFirstName()));
-		List<String> quick_replies = new ArrayList<>();
-		quick_replies.add(Constants.Types.location.name());
+		List<QuickReply> quick_replies = new ArrayList<>();
+		QuickReply qr = new QuickReply();
+		qr.setContent_type(Constants.Types.location.name());
+		quick_replies.add(qr);
 		msg.setQuick_replies(quick_replies);
 		return getJsonReply(senderId, msg);
 	}
@@ -292,66 +299,177 @@ public class FbChatHelper {
 		return t;
 	}
 
-	public String getGooglePlacesRes(String senderId, double latitude, double longitude) {
-		Message msg = new Message();
-		try {
-			List<Result> res = PlacesAPI.getNearbyPlaces(latitude, longitude).getResults();
+	public List<String> getGooglePlacesRes(String senderId, double latitude, double longitude,
+			ConcurrentHashMap<String, NearbyResponse> userRecommendations) {
+		if (Constants.isDebugEnabled)
+			System.out.println("Get google res for : " + senderId);
 
-			List<Element> elems = new ArrayList<Element>();
-			for (Result r : res) {
-				elems.add(buildElement(r));
+		List<String> jsonReplies = new ArrayList<String>();
+
+		try {
+			NearbyResponse nearbyResponse = userRecommendations.get(senderId);
+			if (nearbyResponse == null) {
+				nearbyResponse = PlacesAPI.getNearbyPlaces(latitude, longitude);
+				userRecommendations.put(senderId, nearbyResponse);
 			}
-			
+			jsonReplies = sendNextItemToBot(senderId, 0, userRecommendations);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		String msgText = "Your lat is " + latitude + "Your long is " + longitude + ".";
-		return getJsonReply(senderId, getMsg(msgText));
+		return jsonReplies;
 	}
 
 	private Element buildElement(Result r) {
 		Element e = new Element();
 		e.setTitle(r.getName());
-		e.setImageUrl(r.getIcon());
+		if (r.getPhotos() != null && r.getPhotos().size() > 0) {
+			try {
+				URLConnection conn = (new URL(PlacesAPI.getPhotoURL(r.getPhotos().get(0).getPhotoreference())))
+						.openConnection();
+				conn.setAllowUserInteraction(true);
+				conn.connect();
+				conn.getInputStream();
+				e.setImageUrl(conn.getURL().toString());
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		} else {
+			e.setImageUrl(r.getIcon());
+		}
 		e.setSubtitle(getSubtitle(r));
-		e.setButtons(addButtons(r.getPlace_id()));
+		DefaultAction default_action = new DefaultAction();
+		default_action.setType(Constants.Types.web_url.name());
+		default_action.setWebview_height_ratio(Constants.Heights.full.name());
+		default_action.setUrl(r.getIcon());
+		e.setDefault_action(default_action);
+		e.setButtons(addButton(r.getPlace_id()));
 		return e;
 	}
 
-	private String getSubtitle(Result r) {
-
-		String res = "Located in the vicinity of {vicinity}. Rated {rating} and has {reviews} reviews. People generally spend around {timeSpent} here.";
-
-		res.replace("{vicintiy}", r.getVicinity());
-		res.replace("{rating}", r.getVicinity());
-		res.replace("{reviews}", r.getVicinity());
-		res.replace("{timeSpent}", r.getTimeSpent());
+	private String getDescription(Result r) {
+		String res = r.getName()
+				+ " is located in the vicinity of {vicinity}. Rated {rating} and has {reviews} reviews. ";
+		Random rand = new Random();
+		res = res.replace("{vicinity}", r.getVicinity());
+		res = res.replace("{rating}", "" + (r.getRating() == 0.0 ? (rand.nextInt(24) + 26) / 10.0 : r.getRating()));
+		res = res.replace("{reviews}", "" + rand.nextInt(100));
+		res = res.replace("{timeSpent}", "" + (rand.nextInt(10) + 1) / 2.0);
 
 		return res;
 	}
 
-	private List<Button> addButtons(String place_id) {
+	private String getSubtitle(Result r) {
+
+		String res = "People generally spend around {timeSpent} hour here.";
+		res = res.replace("{timeSpent}", "" + (int) (new Random().nextInt(10) + 2) / 2.0);
+		return res;
+	}
+
+	private List<Button> addButton(String place_id) {
 		List<Button> buttons = new ArrayList<>();
 		Button b1 = new Button();
-		b1.setTitle("Sure!");
-		b1.setPayload("placeId_res " + 1 + " " + place_id);
-		b1.setType(Constants.Types.postback.name());
+		b1.setTitle("Cool");
+		b1.setPayload("placeId_res YES " + place_id);
 
+		b1.setType(Constants.Types.postback.name());
 		Button b2 = new Button();
-		b2.setTitle("Maybe?");
-		b2.setPayload("placeId_res " + 0 + " " + place_id);
+		b2.setTitle("Maybe");
+		b2.setPayload("placeId_res MAY " + place_id);
 		b2.setType(Constants.Types.postback.name());
 
 		Button b3 = new Button();
-		b3.setTitle("Meh.");
-		b3.setPayload("placeId_res " + -1 + " " + place_id);
+		b3.setTitle("Meh");
+		b3.setPayload("placeId_res NO " + place_id);
 		b3.setType(Constants.Types.postback.name());
 
 		buttons.add(b1);
 		buttons.add(b2);
 		buttons.add(b3);
 		return buttons;
+	}
+
+	public List<String> processUserRecommendations(String senderId, String payloadMessage,
+			ConcurrentHashMap<String, NearbyResponse> userRecommendations) {
+		String[] arr = payloadMessage.split(" ");
+
+		List<String> jsonReplies = new ArrayList<>();
+
+		if (arr[0].equals("placeId_res")) {
+			String placeId = arr[2];
+
+			NearbyResponse nearbyRes = userRecommendations.get(senderId);
+			List<Result> results = nearbyRes.getResults();
+
+			boolean removeIndex = false;
+			Integer foundAt = null;
+			for (int i = 0; i < results.size(); i++) {
+
+				Result r = results.get(i);
+
+				if (r.getPlace_id().equals(placeId)) {
+					foundAt = i;
+					removeIndex = arr[1].equals("YES");
+					break;
+				}
+			}
+			if (foundAt == results.size() - 1) {
+				// Send list as response
+				userRecommendations.remove(senderId);
+				// build url route map.
+				if (removeIndex)
+					results.remove(foundAt);
+
+				List<Element> elements = new ArrayList<>();
+
+				for (Result r : nearbyRes.getResults()) {
+					elements.add(buildElement(r));
+				}
+
+				Message attachMsg = new Message();
+				attachMsg.setAttachment(new Attachment());
+				attachMsg.getAttachment().setType(Constants.Types.template.name());
+				attachMsg.getAttachment().setPayload(new Payload());
+				attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.list.name());
+				attachMsg.getAttachment().getPayload().setElements(elements);
+				jsonReplies.add(getJsonReply(senderId, attachMsg));
+
+			} else {
+				// send next item as response
+				jsonReplies = sendNextItemToBot(senderId, foundAt + 1, userRecommendations);
+			}
+
+			if (removeIndex)
+				results.remove(foundAt);
+
+		}
+
+		return jsonReplies;
+	}
+
+	private List<String> sendNextItemToBot(String senderId, int index,
+			ConcurrentHashMap<String, NearbyResponse> userRecommendations) {
+		List<String> jsonReplies = new ArrayList<String>();
+
+		NearbyResponse nearbyResponse = userRecommendations.get(senderId);
+		List<Result> res = nearbyResponse.getResults();
+		List<Element> elems = new ArrayList<Element>();
+		Message textMsg = new Message();
+
+		Result next = res.get(index);
+		elems.add(buildElement(next));
+		textMsg.setText(getDescription(next));
+		jsonReplies.add(getJsonReply(senderId, textMsg));
+
+		Message attachMsg = new Message();
+		attachMsg.setAttachment(new Attachment());
+		attachMsg.getAttachment().setType(Constants.Types.template.name());
+		attachMsg.getAttachment().setPayload(new Payload());
+		attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.generic.name());
+		attachMsg.getAttachment().getPayload().setElements(elems);
+		jsonReplies.add(getJsonReply(senderId, attachMsg));
+
+		return jsonReplies;
 	}
 
 }
