@@ -26,7 +26,7 @@ public class NearbyResponse {
 		this.next_page_token = next_page_token;
 	}
 
-	@SerializedName("results")
+	@SerializedName("latitude")
 	@Expose
 	public double latitude;
 
@@ -46,7 +46,7 @@ public class NearbyResponse {
 		this.longitude = longitude;
 	}
 
-	@SerializedName("results")
+	@SerializedName("longitude")
 	@Expose
 	public double longitude;
 

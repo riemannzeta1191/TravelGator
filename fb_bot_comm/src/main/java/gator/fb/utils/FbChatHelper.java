@@ -528,7 +528,7 @@ public class FbChatHelper {
 		JsonObject recp = new JsonObject();
 		recp.addProperty("id", senderId);
 		obj.add("recipient", recp);
-		return obj.getAsString();
+		return obj.toString();
 	}
 
 }
