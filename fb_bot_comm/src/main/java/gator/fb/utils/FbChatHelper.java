@@ -20,6 +20,8 @@ import gator.fb.contract.Payload;
 import gator.fb.contract.Recipient;
 import gator.fb.profile.FbProfile;
 import gator.fb.servlet.WebHookServlet;
+import gator.google.contract.NearbyResponse;
+import gator.google.contract.Result;
 import gator.google.places.PlacesAPI;
 
 /**
@@ -130,7 +132,11 @@ public class FbChatHelper {
 	public String getWelcomeMsg(String senderId) {
 		String link = StringUtils.replace(profileLink, "SENDER_ID", senderId);
 		FbProfile profile = getObjectFromUrl(link, FbProfile.class);
-		return getJsonReply(senderId, getMsg(Constants.welcomeMessage.replace("{0}", profile.getFirstName())));
+		Message msg = getMsg(Constants.welcomeMessage.replace("{0}", profile.getFirstName()));
+		List<String> quick_replies = new ArrayList<>();
+		quick_replies.add(Constants.Types.location.name());
+		msg.setQuick_replies(quick_replies);
+		return getJsonReply(senderId, msg);
 	}
 
 	private Message getMsg(String msg) {
@@ -287,8 +293,15 @@ public class FbChatHelper {
 	}
 
 	public String getGooglePlacesRes(String senderId, double latitude, double longitude) {
+		Message msg = new Message();
 		try {
-			System.out.println(PlacesAPI.getNearbyPlaces(latitude, longitude));
+			List<Result> res = PlacesAPI.getNearbyPlaces(latitude, longitude).getResults();
+
+			List<Element> elems = new ArrayList<Element>();
+			for (Result r : res) {
+				elems.add(buildElement(r));
+			}
+			
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -296,4 +309,49 @@ public class FbChatHelper {
 		String msgText = "Your lat is " + latitude + "Your long is " + longitude + ".";
 		return getJsonReply(senderId, getMsg(msgText));
 	}
+
+	private Element buildElement(Result r) {
+		Element e = new Element();
+		e.setTitle(r.getName());
+		e.setImageUrl(r.getIcon());
+		e.setSubtitle(getSubtitle(r));
+		e.setButtons(addButtons(r.getPlace_id()));
+		return e;
+	}
+
+	private String getSubtitle(Result r) {
+
+		String res = "Located in the vicinity of {vicinity}. Rated {rating} and has {reviews} reviews. People generally spend around {timeSpent} here.";
+
+		res.replace("{vicintiy}", r.getVicinity());
+		res.replace("{rating}", r.getVicinity());
+		res.replace("{reviews}", r.getVicinity());
+		res.replace("{timeSpent}", r.getTimeSpent());
+
+		return res;
+	}
+
+	private List<Button> addButtons(String place_id) {
+		List<Button> buttons = new ArrayList<>();
+		Button b1 = new Button();
+		b1.setTitle("Sure!");
+		b1.setPayload("placeId_res " + 1 + " " + place_id);
+		b1.setType(Constants.Types.postback.name());
+
+		Button b2 = new Button();
+		b2.setTitle("Maybe?");
+		b2.setPayload("placeId_res " + 0 + " " + place_id);
+		b2.setType(Constants.Types.postback.name());
+
+		Button b3 = new Button();
+		b3.setTitle("Meh.");
+		b3.setPayload("placeId_res " + -1 + " " + place_id);
+		b3.setType(Constants.Types.postback.name());
+
+		buttons.add(b1);
+		buttons.add(b2);
+		buttons.add(b3);
+		return buttons;
+	}
+
 }

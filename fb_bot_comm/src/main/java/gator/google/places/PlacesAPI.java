@@ -22,7 +22,7 @@ public class PlacesAPI {
 	private static final HttpClient client = HttpClientBuilder.create().build();
 	private static final HttpGet httpGet = new HttpGet(NEARBY_URL + API_KEY);
 
-	public static String getNearbyPlaces(double latitude, double longitude) throws Exception {
+	public static NearbyResponse getNearbyPlaces(double latitude, double longitude) throws Exception {
 		URIBuilder builder = new URIBuilder(NEARBY_URL);
 		builder.addParameter("key", API_KEY);
 		builder.addParameter("location", latitude + "," + longitude);
@@ -32,10 +32,10 @@ public class PlacesAPI {
 
 		System.out.println(httpGet.getURI());
 
-		// System.out.println(EntityUtils.toString(response.getEntity(),
-		// "UTF-8"));
-		NearbyResponse nearbyResponse = new Gson().fromJson(EntityUtils.toString(response.getEntity(), "UTF-8"),
-				NearbyResponse.class);
+		String body = EntityUtils.toString(response.getEntity(), "UTF-8");
+		System.out.println(body);
+
+		NearbyResponse nearbyResponse = new Gson().fromJson(body, NearbyResponse.class);
 		System.out.println(nearbyResponse.getResults().size());
 		return null;
 	}

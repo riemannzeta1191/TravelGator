@@ -65,9 +65,32 @@ public class Result {
 	@SerializedName("vicinity")
 	@Expose
 	private String vicinity;
+	
+	@SerializedName("icon")
+	@Expose
+	private String icon;
+
+	public String getIcon() {
+		return icon;
+	}
+
+	public void setIcon(String icon) {
+		this.icon = icon;
+	}
 
 	@SerializedName("geometry")
 	@Expose
 	private Geometry geometry;
 
+
+	private String timeSpent = "1";
+
+	public String getTimeSpent() {
+		return timeSpent;
+	}
+
+	public void setTimeSpent(String timeSpent) {
+		this.timeSpent = timeSpent;
+	}
+	
 }

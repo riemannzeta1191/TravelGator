@@ -31,7 +31,7 @@ public class NearbyResponse {
 	@SerializedName("results")
 	@Expose
 	private List<Result> results;
-	
+
 	@SerializedName("next_page_token")
 	@Expose
 	private String next_page_token;
