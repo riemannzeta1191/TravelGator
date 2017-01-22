@@ -120,15 +120,20 @@ public class PlacesAPI {
 				optimumOrder.add(places.get(results[i]));
 			}
 
-			optimumOrder = nearbyResponse.getResults();
+			// optimumOrder = nearbyResponse.getResults();
 
 			builder = new URIBuilder(Map_URL);
+
+			locations = locations + "/" + nearbyResponse.getLatitude() + "," + nearbyResponse.getLongitude();
+
 			for (int i = 0; i < optimumOrder.size(); i++) {
 
 				locations = locations + "/" + optimumOrder.get(i).getGeometry().getLocation().getLat() + ","
 						+ optimumOrder.get(i).getGeometry().getLocation().getLng();
 
 			}
+
+			locations = locations + "/" + nearbyResponse.getLatitude() + "," + nearbyResponse.getLongitude();
 
 			locations = Map_URL + locations;
 		} catch (Exception e) {
