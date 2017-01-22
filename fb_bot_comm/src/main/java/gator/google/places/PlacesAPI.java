@@ -45,8 +45,8 @@ public class PlacesAPI {
 	static final String PLACES_API_KEY = "AIzaSyDeUu4Jo92ulHd-dH4FAhu1tCfBKjHA7KU";
 	static final String PLACE_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json?";
 	static final String RADAR_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/radarsearch/json?";
-	private static final HttpGet placeHttpGet = new HttpGet(PLACE_DETAILS_URL + PLACES_API_KEY);
-	private static final HttpGet nearbyPlacesHttpGet = new HttpGet(RADAR_SEARCH_URL + PLACES_API_KEY);
+	private static final HttpGet placeHttpGet = new HttpGet(PLACE_DETAILS_URL);
+	private static final HttpGet nearbyPlacesHttpGet = new HttpGet(RADAR_SEARCH_URL);
 	private static final List<String> placeTypes = Arrays.asList("amusement_park", "aquarium", "art_gallery", "bar",
 			"bowling_alley", "casino", "library", "movie_theater", "museum", "night_club", "restaurant",
 			"shopping_mall", "spa", "stadium", "university", "zoo");
@@ -181,16 +181,17 @@ public class PlacesAPI {
 	public static List<Result> getHighRatedLocs(JsonArray arrayResults) throws Exception {
 		List<Result> placeResults = new ArrayList<>();
 		for (JsonElement obj : arrayResults) {
-			String placeId = obj.getAsJsonObject().get("place_id").toString();
+			String placeId = obj.getAsJsonObject().get("place_id").getAsString();
 			URIBuilder builder = new URIBuilder(PLACE_DETAILS_URL);
 			builder.addParameter("key", PLACES_API_KEY);
 			builder.addParameter("placeid", placeId);
 			placeHttpGet.setURI(builder.build());
 			HttpResponse response = client.execute(placeHttpGet);
 			String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-
+			System.out.println(body);
 			PlaceResult pr = new Gson().fromJson(body, PlaceResult.class);
-
+			System.out.println(pr + "--" + (pr.getResult()));
+			System.out.println(placeHttpGet.getURI());
 			double rating = pr.getResult().getRating();
 			if (rating > 3.8) {
 				placeResults.add(pr.getResult());
