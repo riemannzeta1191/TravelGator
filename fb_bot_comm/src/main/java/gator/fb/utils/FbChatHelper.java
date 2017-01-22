@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -300,10 +301,11 @@ public class FbChatHelper {
 
 	private static ConcurrentHashMap<String, NearbyResponse> userRecommendations = new ConcurrentHashMap<>();
 
-	public String getGooglePlacesRes(String senderId, double latitude, double longitude) {
+	public List<String> getGooglePlacesRes(String senderId, double latitude, double longitude) {
 		if (Constants.isDebugEnabled)
 			System.out.println("Get google res for : " + senderId);
-		Message msg = new Message();
+
+		List<String> jsonReplies = new ArrayList<String>();
 
 		try {
 			NearbyResponse nearbyResponse = userRecommendations.get(senderId);
@@ -315,32 +317,52 @@ public class FbChatHelper {
 			List<Result> res = nearbyResponse.getResults();
 
 			List<Element> elems = new ArrayList<Element>();
+
+			Message textMsg = new Message();
+
 			if (res.size() == 0) {
 
 			} else {
 				Result next = res.get(0);
 				res.remove(0);
 				elems.add(buildElement(next));
+				textMsg.setText(getDescription(next));
 			}
+			jsonReplies.add(getJsonReply(senderId, textMsg));
 
-			msg.setAttachment(new Attachment());
-			msg.getAttachment().setType(Constants.Types.template.name());
-			msg.getAttachment().setPayload(new Payload());
-			msg.getAttachment().getPayload().setTemplateType(Constants.Types.generic.name());
-			msg.getAttachment().getPayload().setElements(elems);
+			Message attachMsg = new Message();
+			attachMsg.setAttachment(new Attachment());
+			attachMsg.getAttachment().setType(Constants.Types.template.name());
+			attachMsg.getAttachment().setPayload(new Payload());
+			attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.generic.name());
+			attachMsg.getAttachment().getPayload().setElements(elems);
+			jsonReplies.add(getJsonReply(senderId, attachMsg));
 			if (Constants.isDebugEnabled)
-				System.out.println(msg.toString());
+				System.out.println(attachMsg.toString());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return getJsonReply(senderId, msg);
+		return jsonReplies;
 	}
 
 	private Element buildElement(Result r) {
 		Element e = new Element();
 		e.setTitle(r.getName());
-		e.setImageUrl(r.getIcon());
+		if (r.getPhotos().size() > 0) {
+			try {
+				URLConnection conn = (new URL(PlacesAPI.getPhotoURL(r.getPhotos().get(0).getPhotoreference())))
+						.openConnection();
+				conn.setAllowUserInteraction(true);
+				conn.connect();
+				conn.getInputStream();
+				e.setImageUrl(conn.getURL().toString());
+			} catch (Exception e1) {
+				e1.printStackTrace();
+			}
+		} else {
+			e.setImageUrl(r.getIcon());
+		}
 		e.setSubtitle(getSubtitle(r));
 		DefaultAction default_action = new DefaultAction();
 		default_action.setType(Constants.Types.web_url.name());
@@ -351,25 +373,45 @@ public class FbChatHelper {
 		return e;
 	}
 
+	private String getDescription(Result r) {
+		String res = r.getName()
+				+ " is located in the vicinity of {vicinity}. Rated {rating} and has {reviews} reviews. ";
+		Random rand = new Random();
+		res = res.replace("{vicinity}", r.getVicinity());
+		res = res.replace("{rating}", "" + (r.getRating() == 0.0 ? (rand.nextInt(24) + 26) / 10.0 : r.getRating()));
+		res = res.replace("{reviews}", "" + rand.nextInt(100));
+		res = res.replace("{timeSpent}", "" + (rand.nextInt(10) + 1) / 2.0);
+
+		return res;
+	}
+
 	private String getSubtitle(Result r) {
 
-		String res = "Located in the vicinity of {vicinity}. Rated {rating} and has {reviews} reviews. People generally spend around {timeSpent} here.";
-
-		res = res.replace("{vicinity}", r.getVicinity());
-		res = res.replace("{rating}", "" + r.getRating());
-		res = res.replace("{reviews}", "" + new Random().nextInt(100));
-		res = res.replace("{timeSpent}", "" + (new Random().nextInt(10) + 1) / 2.0);
-
+		String res = "People generally spend around {timeSpent} hour here.";
+		res = res.replace("{timeSpent}", "" + (int) (new Random().nextInt(10) + 2) / 2.0);
 		return res;
 	}
 
 	private List<Button> addButton(String place_id) {
 		List<Button> buttons = new ArrayList<>();
 		Button b1 = new Button();
-		b1.setTitle("Add");
-		b1.setPayload("placeId_res " + place_id);
+		b1.setTitle("Cool");
+		b1.setPayload("placeId_res YES" + place_id);
+
 		b1.setType(Constants.Types.postback.name());
+		Button b2 = new Button();
+		b2.setTitle("Maybe");
+		b2.setPayload("placeId_res MAY" + place_id);
+		b2.setType(Constants.Types.postback.name());
+
+		Button b3 = new Button();
+		b3.setTitle("Meh");
+		b3.setPayload("placeId_res NO" + place_id);
+		b3.setType(Constants.Types.postback.name());
+
 		buttons.add(b1);
+		buttons.add(b2);
+		buttons.add(b3);
 		return buttons;
 	}
 

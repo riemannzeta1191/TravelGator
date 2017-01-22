@@ -4,6 +4,8 @@ import java.util.List;
 
 import javax.annotation.Generated;
 
+import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -69,6 +71,18 @@ public class Result {
 	@SerializedName("icon")
 	@Expose
 	private String icon;
+	
+	public List<Photo> getPhotos() {
+		return photos;
+	}
+
+	public void setPhotos(List<Photo> photos) {
+		this.photos = photos;
+	}
+
+	@SerializedName("photos")
+	@Expose
+	private List<Photo> photos;
 
 	public String getIcon() {
 		return icon;
@@ -103,5 +117,12 @@ public class Result {
 	public void setTimeSpent(String timeSpent) {
 		this.timeSpent = timeSpent;
 	}
+	
+
+	@Override
+	public String toString() {
+		return ToStringBuilder.reflectionToString(this);
+	}
+	
 	
 }

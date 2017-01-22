@@ -167,9 +167,9 @@ public class WebHookServlet extends HttpServlet {
 					break;
 
 				case UserState.processing_locations:
-
+					System.out.println("------->" + msgObj.getText());
+					processUserRecommendations(senderID, msgObj.getText());
 					break;
-
 				default:
 					break;
 				}
@@ -191,16 +191,24 @@ public class WebHookServlet extends HttpServlet {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 
+	private void processUserRecommendations(String senderId, String string) {
+		List<String> res;
+
+	}
+
 	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
 
-		String res = helper.getGooglePlacesRes(senderId, latitude, longitude);
+		List<String> res = helper.getGooglePlacesRes(senderId, latitude, longitude);
 
-		HttpEntity entity = new ByteArrayEntity(((String) res).getBytes("UTF-8"));
-		httppost.setEntity(entity);
-		HttpResponse response = client.execute(httppost);
-		String result = EntityUtils.toString(response.getEntity());
-		if (Constants.isDebugEnabled)
-			System.out.println(result);
+		for (String r : res) {
+
+			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
+			httppost.setEntity(entity);
+			HttpResponse response = client.execute(httppost);
+			String result = EntityUtils.toString(response.getEntity());
+			if (Constants.isDebugEnabled)
+				System.out.println(result);
+		}
 	}
 
 	private void handleWelcomeMessage(String senderId) throws Exception {
@@ -209,7 +217,7 @@ public class WebHookServlet extends HttpServlet {
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
 		String result = EntityUtils.toString(response.getEntity());
-		
+
 		if (Constants.isDebugEnabled)
 			System.out.println(result);
 	}
