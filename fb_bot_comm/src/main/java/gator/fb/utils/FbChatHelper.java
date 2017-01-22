@@ -417,7 +417,6 @@ public class FbChatHelper {
 			}
 			if (foundAt == results.size() - 1) {
 				// Send list as response
-				userRecommendations.remove(senderId);
 				// build url route map.
 				if (removeIndex)
 					results.remove(foundAt);

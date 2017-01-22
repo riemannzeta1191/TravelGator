@@ -175,6 +175,7 @@ public class WebHookServlet extends HttpServlet {
 						}
 					}
 				} else if (postback != null) {
+					System.err.println(postback.getPayload());
 					processUserRecommendations(senderID, postback.getPayload());
 				} else {
 					System.err.println("Ayyo :(");

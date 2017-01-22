@@ -76,12 +76,12 @@ public class PlacesAPI {
 		builder.addParameter("waypoints", waypoints);
 
 		httpGet.setURI(builder.build());
-		System.out.println(httpGet.getURI());
+		// System.out.println(httpGet.getURI());
 
 		HttpResponse response = client.execute(httpGet);
 
 		String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-		System.out.println(body);
+		// System.out.println(body);
 
 		NearbyResponse directionsResponse = new Gson().fromJson(body, NearbyResponse.class);
 
@@ -94,7 +94,7 @@ public class PlacesAPI {
 		// System.out.println(Json);
 
 		String arr = Json.get("waypoint_order").toString();
-		System.out.println(arr);
+		// System.out.println(arr);
 
 		String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\s", "").split(",");
 
@@ -107,10 +107,9 @@ public class PlacesAPI {
 				// NOTE: write something here if you need to recover from
 				// formatting errors
 			}
-			;
 		}
 
-		System.out.println(results[0]);
+		// System.out.println(results[0]);
 
 		List<Result> optimumOrder = new ArrayList<Result>(places.size());
 
@@ -135,7 +134,7 @@ public class PlacesAPI {
 		}
 
 		locations = Map_URL + locations;
-		System.out.println(locations);
+		// System.out.println(locations);
 		return locations;
 	}
 
@@ -188,10 +187,10 @@ public class PlacesAPI {
 			placeHttpGet.setURI(builder.build());
 			HttpResponse response = client.execute(placeHttpGet);
 			String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-			System.out.println(body);
+			// System.out.println(body);
 			PlaceResult pr = new Gson().fromJson(body, PlaceResult.class);
-			System.out.println(pr + "--" + (pr.getResult()));
-			System.out.println(placeHttpGet.getURI());
+			// System.out.println(pr + "--" + (pr.getResult()));
+			// System.out.println(placeHttpGet.getURI());
 			double rating = pr.getResult().getRating();
 			if (rating > 3.8) {
 				placeResults.add(pr.getResult());
