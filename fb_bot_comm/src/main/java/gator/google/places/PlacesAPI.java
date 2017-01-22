@@ -39,9 +39,6 @@ public class PlacesAPI {
 	private static final HttpClient client = HttpClientBuilder.create().build();
 	private static final HttpGet httpGet = new HttpGet(NEARBY_URL + API_KEY);
 
-	private static double lat = 0;
-	private static double lng = 0;
-
 	static final String PLACES_API_KEY = "AIzaSyDeUu4Jo92ulHd-dH4FAhu1tCfBKjHA7KU";
 	static final String PLACE_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json?";
 	static final String RADAR_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/radarsearch/json?";
@@ -54,86 +51,85 @@ public class PlacesAPI {
 	private static final int typeLocLimit = 2;
 
 	// My func
-	public static void getDirections(NearbyResponse nearbyResponse) throws Exception {
-
-		URIBuilder builder = new URIBuilder(Direction_URL);
-		builder.addParameter("key", Direction_KEY);
-		builder.addParameter("origin", lat + "," + lng);
-		builder.addParameter("destination", lat + "," + lng);
-		List<Result> places = nearbyResponse.getResults();
-
-		String waypoints = "";
-
-		for (Result rs : places) {
-
-			waypoints = waypoints + "|" + rs.getGeometry().getLocation().getLat() + ","
-					+ rs.getGeometry().getLocation().getLng();
-
-		}
-
-		waypoints = "optimize:true" + waypoints;
-
-		builder.addParameter("waypoints", waypoints);
-
-		httpGet.setURI(builder.build());
-		// System.out.println(httpGet.getURI());
-
-		HttpResponse response = client.execute(httpGet);
-
-		String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-		// System.out.println(body);
-
-		NearbyResponse directionsResponse = new Gson().fromJson(body, NearbyResponse.class);
-
-		JsonParser parser = new JsonParser();
-		JsonObject json = parser.parse(body).getAsJsonObject();
-
-		JsonArray js = json.getAsJsonArray("routes");
-
-		JsonObject Json = js.get(0).getAsJsonObject();
-		// System.out.println(Json);
-
-		String arr = Json.get("waypoint_order").toString();
-		// System.out.println(arr);
-
-		String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\s", "").split(",");
-
-		int[] results = new int[items.length];
-
-		for (int i = 0; i < items.length; i++) {
-			try {
-				results[i] = Integer.parseInt(items[i]);
-			} catch (NumberFormatException nfe) {
-				// NOTE: write something here if you need to recover from
-				// formatting errors
-			}
-		}
-
-		// System.out.println(results[0]);
-
-		List<Result> optimumOrder = new ArrayList<Result>(places.size());
-
-		for (int i = 0; i < results.length; i++) {
-			optimumOrder.add(places.get(results[i]));
-		}
-
-		// getDirectionMap(optimumOrder);
-	}
-
-	public static String getDirectionMap(NearbyResponse nb) throws Exception {
-
-		List<Result> optimumOrder = nb.getResults();
-
-		URIBuilder builder = new URIBuilder(Map_URL);
+	public static String getDirections(NearbyResponse nearbyResponse) {
 		String locations = "";
-		for (int i = 0; i < optimumOrder.size(); i++) {
+		try {
+			double lat = 0;
+			double lng = 0;
 
-			locations = locations + "/" + optimumOrder.get(i).getGeometry().getLocation().getLat() + ","
-					+ optimumOrder.get(i).getGeometry().getLocation().getLng();
+			URIBuilder builder = new URIBuilder(Direction_URL);
+			builder.addParameter("key", Direction_KEY);
+			builder.addParameter("origin", lat + "," + lng);
+			builder.addParameter("destination", lat + "," + lng);
+			List<Result> places = nearbyResponse.getResults();
 
+			String waypoints = "";
+
+			for (Result rs : places) {
+
+				waypoints = waypoints + "|" + rs.getGeometry().getLocation().getLat() + ","
+						+ rs.getGeometry().getLocation().getLng();
+
+			}
+
+			waypoints = "optimize:true" + waypoints;
+
+			builder.addParameter("waypoints", waypoints);
+
+			httpGet.setURI(builder.build());
+			// System.out.println(httpGet.getURI());
+
+			HttpResponse response = client.execute(httpGet);
+
+			String body = EntityUtils.toString(response.getEntity(), "UTF-8");
+			// System.out.println(body);
+
+			JsonParser parser = new JsonParser();
+			JsonObject json = parser.parse(body).getAsJsonObject();
+
+			JsonArray js = json.getAsJsonArray("routes");
+
+			JsonObject Json = js.get(0).getAsJsonObject();
+			// System.out.println(Json);
+
+			String arr = Json.get("waypoint_order").toString();
+			// System.out.println(arr);
+
+			String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\s", "").split(",");
+
+			int[] results = new int[items.length];
+
+			for (int i = 0; i < items.length; i++) {
+				try {
+					results[i] = Integer.parseInt(items[i]);
+				} catch (NumberFormatException nfe) {
+					// NOTE: write something here if you need to recover from
+					// formatting errors
+				}
+			}
+
+			// System.out.println(results[0]);
+
+			List<Result> optimumOrder = new ArrayList<Result>(places.size());
+
+			for (int i = 0; i < results.length; i++) {
+				optimumOrder.add(places.get(results[i]));
+			}
+
+			optimumOrder = nearbyResponse.getResults();
+
+			builder = new URIBuilder(Map_URL);
+			for (int i = 0; i < optimumOrder.size(); i++) {
+
+				locations = locations + "/" + optimumOrder.get(i).getGeometry().getLocation().getLat() + ","
+						+ optimumOrder.get(i).getGeometry().getLocation().getLng();
+
+			}
+
+			locations = Map_URL + locations;
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
-
-		locations = Map_URL + locations;
 		// System.out.println(locations);
 		return locations;
 	}
@@ -165,8 +161,7 @@ public class PlacesAPI {
 				nearbyResponse = new Gson().fromJson(body, NearbyResponse.class);
 			}
 
-			placeResults
-					.addAll(getHighRatedLocs(new JsonParser().parse(body).getAsJsonObject().getAsJsonArray("results")));
+			getHighRatedLocs(new JsonParser().parse(body).getAsJsonObject().getAsJsonArray("results"), placeResults);
 
 			if (placeResults.size() >= filterLocCount)
 				break;
@@ -177,8 +172,8 @@ public class PlacesAPI {
 		return nearbyResponse;
 	}
 
-	public static List<Result> getHighRatedLocs(JsonArray arrayResults) throws Exception {
-		List<Result> placeResults = new ArrayList<>();
+	public static List<Result> getHighRatedLocs(JsonArray arrayResults, List<Result> placeResults) throws Exception {
+		int thisIter = 0;
 		for (JsonElement obj : arrayResults) {
 			String placeId = obj.getAsJsonObject().get("place_id").getAsString();
 			URIBuilder builder = new URIBuilder(PLACE_DETAILS_URL);
@@ -193,9 +188,10 @@ public class PlacesAPI {
 			// System.out.println(placeHttpGet.getURI());
 			double rating = pr.getResult().getRating();
 			if (rating > 3.8) {
+				thisIter++;
 				placeResults.add(pr.getResult());
 			}
-			if (placeResults.size() >= typeLocLimit)
+			if (thisIter >= typeLocLimit || placeResults.size() >= filterLocCount)
 				break;
 		}
 

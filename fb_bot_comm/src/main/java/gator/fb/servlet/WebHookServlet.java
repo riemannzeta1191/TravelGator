@@ -175,8 +175,12 @@ public class WebHookServlet extends HttpServlet {
 						}
 					}
 				} else if (postback != null) {
-					System.err.println(postback.getPayload());
-					processUserRecommendations(senderID, postback.getPayload());
+					String payload = postback.getPayload();
+
+					if (payload.startsWith("LoadMore")) {
+						processFinalRoute(senderID);
+					} else
+						processUserRecommendations(senderID, postback.getPayload());
 				} else {
 					System.err.println("Ayyo :(");
 				}
@@ -187,6 +191,19 @@ public class WebHookServlet extends HttpServlet {
 		}
 
 		response.setStatus(HttpServletResponse.SC_OK);
+	}
+
+	private void processFinalRoute(String senderID) throws Exception {
+		List<String> res = helper.processFinalRoute(senderID, userRecommendations);
+		for (String r : res) {
+
+			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
+			httppost.setEntity(entity);
+			HttpResponse response = client.execute(httppost);
+			String result = EntityUtils.toString(response.getEntity());
+			if (Constants.isDebugEnabled)
+				System.out.println(result);
+		}
 	}
 
 	private void processUserRecommendations(String senderId, String payloadMessage) throws Exception {

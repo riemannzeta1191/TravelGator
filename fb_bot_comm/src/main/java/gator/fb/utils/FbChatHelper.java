@@ -322,6 +322,12 @@ public class FbChatHelper {
 		return jsonReplies;
 	}
 
+	private Element buildRegularElement(Result r) {
+		Element e = buildElement(r);
+		e.setButtons(addButton(r.getPlace_id()));
+		return e;
+	}
+
 	private Element buildElement(Result r) {
 		Element e = new Element();
 		e.setTitle(r.getName());
@@ -343,9 +349,8 @@ public class FbChatHelper {
 		DefaultAction default_action = new DefaultAction();
 		default_action.setType(Constants.Types.web_url.name());
 		default_action.setWebview_height_ratio(Constants.Heights.full.name());
-		default_action.setUrl(r.getIcon());
+		default_action.setUrl(r.getUrl() == null ? r.getIcon() : r.getUrl());
 		e.setDefault_action(default_action);
-		e.setButtons(addButton(r.getPlace_id()));
 		return e;
 	}
 
@@ -366,6 +371,17 @@ public class FbChatHelper {
 		String res = "People generally spend around {timeSpent} hour here.";
 		res = res.replace("{timeSpent}", "" + (int) (new Random().nextInt(10) + 2) / 2.0);
 		return res;
+	}
+
+	private List<Button> addLoadButton(String type, String payload, String title) {
+		List<Button> buttons = new ArrayList<>();
+
+		Button b1 = new Button();
+		b1.setTitle(title);
+		b1.setPayload(payload);
+		b1.setType(type);
+		buttons.add(b1);
+		return buttons;
 	}
 
 	private List<Button> addButton(String place_id) {
@@ -433,6 +449,8 @@ public class FbChatHelper {
 				attachMsg.getAttachment().setPayload(new Payload());
 				attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.list.name());
 				attachMsg.getAttachment().getPayload().setElements(elements);
+				attachMsg.getAttachment().getPayload()
+						.setButtons(addLoadButton(Constants.Types.postback.name(), "LoadMore", "See More!"));
 				jsonReplies.add(getJsonReply(senderId, attachMsg));
 
 			} else {
@@ -458,7 +476,7 @@ public class FbChatHelper {
 		Message textMsg = new Message();
 
 		Result next = res.get(index);
-		elems.add(buildElement(next));
+		elems.add(buildRegularElement(next));
 		textMsg.setText(getDescription(next));
 		jsonReplies.add(getJsonReply(senderId, textMsg));
 
@@ -470,6 +488,38 @@ public class FbChatHelper {
 		attachMsg.getAttachment().getPayload().setElements(elems);
 		jsonReplies.add(getJsonReply(senderId, attachMsg));
 
+		return jsonReplies;
+	}
+
+	public List<String> processFinalRoute(String senderId,
+			ConcurrentHashMap<String, NearbyResponse> userRecommendations) {
+		List<String> jsonReplies = new ArrayList<>();
+
+		NearbyResponse nearbyRes = userRecommendations.get(senderId);
+		List<Result> results = nearbyRes.getResults();
+
+		List<Element> elements = new ArrayList<>();
+
+		for (int i = 4; i <= 7 && i < results.size(); i++) {
+			elements.add(buildElement(results.get(i)));
+		}
+
+		Message attachMsg = new Message();
+		attachMsg.setAttachment(new Attachment());
+		attachMsg.getAttachment().setType(Constants.Types.template.name());
+		attachMsg.getAttachment().setPayload(new Payload());
+		attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.list.name());
+		attachMsg.getAttachment().getPayload().setElements(elements);
+
+		List<Button> routeButtons = new ArrayList<>();
+		Button routeButton = new Button();
+		routeButton.setTitle("View Route");
+		routeButton.setType(Constants.Types.web_url.name());
+		routeButton.setUrl(PlacesAPI.getDirections(nearbyRes));
+		routeButtons.add(routeButton);
+		attachMsg.getAttachment().getPayload().setButtons(routeButtons);
+
+		jsonReplies.add(getJsonReply(senderId, attachMsg));
 		return jsonReplies;
 	}
 
