@@ -323,7 +323,7 @@ public class FbChatHelper {
 	private Element buildElement(Result r) {
 		Element e = new Element();
 		e.setTitle(r.getName());
-		if (r.getPhotos().size() > 0) {
+		if (r.getPhotos() != null && r.getPhotos().size() > 0) {
 			try {
 				URLConnection conn = (new URL(PlacesAPI.getPhotoURL(r.getPhotos().get(0).getPhotoreference())))
 						.openConnection();
