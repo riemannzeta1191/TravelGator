@@ -23,6 +23,18 @@ public class Element {
 	@SerializedName("buttons")
 	@Expose
 	private List<Button> buttons; // = new ArrayList<Button>();
+	
+	@SerializedName("default_action")
+	@Expose
+	private DefaultAction default_action;
+	
+	public DefaultAction getDefault_action() {
+		return default_action;
+	}
+
+	public void setDefault_action(DefaultAction default_action) {
+		this.default_action = default_action;
+	}
 
 	/**
 	 * 
@@ -91,6 +103,8 @@ public class Element {
 	public void setButtons(List<Button> buttons) {
 		this.buttons = buttons;
 	}
+	
+	
 
 	@Override
 	public String toString() {

@@ -7,8 +7,6 @@ import javax.annotation.Generated;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
-import gator.fb.contract.Attachment;
-
 @Generated("org.jsonschema2pojo")
 public class NearbyResponse {
 
@@ -31,7 +29,7 @@ public class NearbyResponse {
 	@SerializedName("results")
 	@Expose
 	private List<Result> results;
-	
+
 	@SerializedName("next_page_token")
 	@Expose
 	private String next_page_token;

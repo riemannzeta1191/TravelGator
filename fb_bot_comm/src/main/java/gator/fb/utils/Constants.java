@@ -14,7 +14,10 @@ public class Constants {
 
 	static final String welcomeMessage = "Howdy {0}! Gator Knuckle Reporting. Chime in your location to make the most out of this trip";
 	public static enum Types {
-		location
+		location, postback, template, list, generic, web_url
+	}
+	public static enum Heights {
+		tall, full
 	}
 
 	public static boolean isCommand(String cmd) {

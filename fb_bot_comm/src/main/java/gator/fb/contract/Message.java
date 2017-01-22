@@ -26,10 +26,23 @@ public class Message {
 	@SerializedName("attachments")
 	@Expose
 	private List<Attachment> attachments;
+	@SerializedName("quick_replies")
+	@Expose
+	private List<QuickReply> quick_replies;
+
+	public List<QuickReply> getQuick_replies() {
+		return quick_replies;
+	}
+
+	public void setQuick_replies(List<QuickReply> quick_replies) {
+		this.quick_replies = quick_replies;
+	}
 
 	@SerializedName("attachment")
 	@Expose
 	private Attachment attachment;
+	
+	
 
 	public Attachment getAttachment() {
 		return attachment;
