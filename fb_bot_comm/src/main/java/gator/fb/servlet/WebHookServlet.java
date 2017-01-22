@@ -130,7 +130,8 @@ public class WebHookServlet extends HttpServlet {
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
 		System.out.println(messagings);
 		System.out.println(messagings.size());
-		for (Messaging event : messagings) {
+
+		forLoop: for (Messaging event : messagings) {
 
 			try {
 				String senderID = event.getSender().getId();
@@ -138,16 +139,16 @@ public class WebHookServlet extends HttpServlet {
 				String prevState = userState.get(senderID);
 				Message msgObj = event.getMessage();
 
-				if (prevState == null || msgObj == null) {
+				if (prevState == null || msgObj == null || msgObj.getText() == null) {
 					handleWelcomeMessage(senderID);
 					userState.put(senderID, UserState.welcome_sent);
-					break;
+					break forLoop;
 				}
 
 				if (msgObj != null && msgObj.getText().equals("clear")) {
 					userState.remove(senderID);
 					helper.clearUserSenderID(senderID);
-					break;
+					break forLoop;
 				}
 
 				switch (prevState) {
@@ -164,10 +165,10 @@ public class WebHookServlet extends HttpServlet {
 								double latitude = attach.getPayload().getCoordinates().getLatitude();
 								double longitude = attach.getPayload().getCoordinates().getLongitude();
 								setGooglePlacesResponse(senderID, latitude, longitude);
-								break;
+								userState.put(senderID, UserState.processing_locations);
+								break forLoop;
 							}
 						}
-						userState.put(senderID, UserState.processing_locations);
 					}
 					break;
 
