@@ -116,7 +116,7 @@ public class WebHookServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 
-		System.out.println("----->" + sb.toString());
+		System.out.println("Msg received ----->" + sb.toString());
 
 		/**
 		 * convert the string request body in java object
@@ -144,6 +144,8 @@ public class WebHookServlet extends HttpServlet {
 					userState.put(senderID, UserState.welcome_sent);
 					break forLoop;
 				}
+
+				System.out.println("User state" + userState.get(senderID));
 
 				if (msgObj != null && msgObj.getText().equals("clear")) {
 					userState.remove(senderID);
@@ -173,10 +175,12 @@ public class WebHookServlet extends HttpServlet {
 					break;
 
 				case UserState.processing_locations:
-					System.out.println("------->" + msgObj.getText());
+					System.out.println("processing_locations------->" + msgObj.getText());
 					processUserRecommendations(senderID, msgObj.getText());
 					break;
 				default:
+					System.out.println("default acse");
+					
 					break;
 				}
 
