@@ -116,7 +116,7 @@ public class WebHookServlet extends HttpServlet {
 			e.printStackTrace();
 		}
 
-		System.out.println("Msg received ----->" + sb.toString());
+		System.out.println("----->" + sb.toString());
 
 		/**
 		 * convert the string request body in java object
@@ -128,27 +128,64 @@ public class WebHookServlet extends HttpServlet {
 			return;
 		}
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
-
+		System.out.println(messagings);
+		System.out.println(messagings.size());
 		forLoop: for (Messaging event : messagings) {
 
 			try {
 				String senderID = event.getSender().getId();
+
+				String prevState = userState.get(senderID);
 				Message msgObj = event.getMessage();
-				if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
+
+				if (prevState == null || msgObj == null) {
 					handleWelcomeMessage(senderID);
-					continue;
-				} else if (msgObj.getAttachments() != null) {
-					for (Attachment attach : msgObj.getAttachments()) {
-						if (attach.getType().equals(Constants.Types.location.name())) {
-							double latitude = attach.getPayload().getCoordinates().getLatitude();
-							double longitude = attach.getPayload().getCoordinates().getLongitude();
-							setGooglePlacesResponse(senderID, latitude, longitude);
-							userState.put(senderID, UserState.processing_locations);
-							break forLoop;
+					userState.put(senderID, UserState.welcome_sent);
+					break;
+				}
+
+				if (msgObj != null && msgObj.getText().equals("clear")) {
+					userState.remove(senderID);
+					helper.clearUserSenderID(senderID);
+					break;
+				}
+
+				switch (prevState) {
+
+				case UserState.welcome_sent:
+					// we got the location.
+					// send places one by one.
+					if (msgObj.getAttachments() != null) {
+
+						// Attachment is there. ignore the text ?
+						// Render only location as of now..
+						for (Attachment attach : msgObj.getAttachments()) {
+							if (attach.getType().equals(Constants.Types.location.name())) {
+								double latitude = attach.getPayload().getCoordinates().getLatitude();
+								double longitude = attach.getPayload().getCoordinates().getLongitude();
+								setGooglePlacesResponse(senderID, latitude, longitude);
+								userState.put(senderID, UserState.processing_locations);
+								break forLoop;
+							}
 						}
 					}
+					break;
+
+				case UserState.processing_locations:
+					System.out.println("------->" + msgObj.getText());
+					processUserRecommendations(senderID, msgObj.getText());
+					break;
+				default:
+					break;
+				}
+
+				System.out.println(msgObj);
+				if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
+					// welcome message.
+
+					continue;
 				} else {
-					System.out.println("Else case");
+					System.out.println("Else case !!");
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
