@@ -2,7 +2,6 @@ package gator.fb.servlet;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -14,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
-import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ByteArrayEntity;
@@ -53,6 +51,7 @@ public class WebHookServlet extends HttpServlet {
 	private static final FbChatHelper helper = new FbChatHelper();
 
 	private static ConcurrentHashMap<String, String> userState = new ConcurrentHashMap<>();
+	private static ConcurrentHashMap<String, NearbyResponse> userRecommendations = new ConcurrentHashMap<>();
 
 	/*************************************************************/
 
@@ -144,19 +143,18 @@ public class WebHookServlet extends HttpServlet {
 					break;
 				}
 
-				if (msgObj != null && msgObj.getText().equals("clear")) {
+				if (msgObj.getText() != null && msgObj.getText().equals("clear")) {
 					userState.remove(senderID);
-					helper.clearUserSenderID(senderID);
+					userRecommendations.remove(senderID);
 					break;
 				}
 
 				switch (prevState) {
 
 				case UserState.welcome_sent:
-					// we got the location.
+					// we now have the location.
 					// send places one by one.
 					if (msgObj.getAttachments() != null) {
-
 						// Attachment is there. ignore the text ?
 						// Render only location as of now..
 						for (Attachment attach : msgObj.getAttachments()) {
@@ -196,14 +194,22 @@ public class WebHookServlet extends HttpServlet {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 
-	private void processUserRecommendations(String senderId, String string) {
-		List<String> res;
+	private void processUserRecommendations(String senderId, String payloadMessage) throws Exception {
+		List<String> res = helper.processUserRecommendations(senderId, payloadMessage, userRecommendations);
+		for (String r : res) {
 
+			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
+			httppost.setEntity(entity);
+			HttpResponse response = client.execute(httppost);
+			String result = EntityUtils.toString(response.getEntity());
+			if (Constants.isDebugEnabled)
+				System.out.println(result);
+		}
 	}
 
 	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
 
-		List<String> res = helper.getGooglePlacesRes(senderId, latitude, longitude);
+		List<String> res = helper.getGooglePlacesRes(senderId, latitude, longitude, userRecommendations);
 
 		for (String r : res) {
 
@@ -235,7 +241,7 @@ public class WebHookServlet extends HttpServlet {
 	 * @param text
 	 * @param isPostBack
 	 */
-	private void sendTextMessage(String senderId, String text, boolean isPostBack) throws Exception {
+	public void sendTextMessage(String senderId, String text, boolean isPostBack) throws Exception {
 
 		List<String> jsonReplies = null;
 		if (isPostBack) {

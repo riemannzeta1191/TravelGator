@@ -299,9 +299,8 @@ public class FbChatHelper {
 		return t;
 	}
 
-	private static ConcurrentHashMap<String, NearbyResponse> userRecommendations = new ConcurrentHashMap<>();
-
-	public List<String> getGooglePlacesRes(String senderId, double latitude, double longitude) {
+	public List<String> getGooglePlacesRes(String senderId, double latitude, double longitude,
+			ConcurrentHashMap<String, NearbyResponse> userRecommendations) {
 		if (Constants.isDebugEnabled)
 			System.out.println("Get google res for : " + senderId);
 
@@ -313,32 +312,7 @@ public class FbChatHelper {
 				nearbyResponse = PlacesAPI.getNearbyPlaces(latitude, longitude);
 				userRecommendations.put(senderId, nearbyResponse);
 			}
-
-			List<Result> res = nearbyResponse.getResults();
-
-			List<Element> elems = new ArrayList<Element>();
-
-			Message textMsg = new Message();
-
-			if (res.size() == 0) {
-
-			} else {
-				Result next = res.get(0);
-				res.remove(0);
-				elems.add(buildElement(next));
-				textMsg.setText(getDescription(next));
-			}
-			jsonReplies.add(getJsonReply(senderId, textMsg));
-
-			Message attachMsg = new Message();
-			attachMsg.setAttachment(new Attachment());
-			attachMsg.getAttachment().setType(Constants.Types.template.name());
-			attachMsg.getAttachment().setPayload(new Payload());
-			attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.generic.name());
-			attachMsg.getAttachment().getPayload().setElements(elems);
-			jsonReplies.add(getJsonReply(senderId, attachMsg));
-			if (Constants.isDebugEnabled)
-				System.out.println(attachMsg.toString());
+			jsonReplies = sendNextItemToBot(senderId, 0, userRecommendations);
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -415,8 +389,87 @@ public class FbChatHelper {
 		return buttons;
 	}
 
-	public void clearUserSenderID(String senderID) {
-		userRecommendations.remove(senderID);
+	public List<String> processUserRecommendations(String senderId, String payloadMessage,
+			ConcurrentHashMap<String, NearbyResponse> userRecommendations) {
+		String[] arr = payloadMessage.split(" ");
+
+		List<String> jsonReplies = new ArrayList<>();
+
+		if (arr[0].equals("placeId_res")) {
+			String placeId = arr[2];
+
+			NearbyResponse nearbyRes = userRecommendations.get(senderId);
+			List<Result> results = nearbyRes.getResults();
+
+			boolean removeIndex = false;
+			Integer foundAt = null;
+			for (int i = 0; i < results.size(); i++) {
+
+				Result r = results.get(i);
+
+				if (r.getPlace_id().equals(placeId)) {
+					foundAt = i;
+					removeIndex = arr[1].equals("YES");
+					break;
+				}
+			}
+			if (foundAt == results.size() - 1) {
+				// Send list as response
+				userRecommendations.remove(senderId);
+				// build url route map.
+				if (removeIndex)
+					results.remove(foundAt);
+
+				List<Element> elements = new ArrayList<>();
+
+				for (Result r : nearbyRes.getResults()) {
+					elements.add(buildElement(r));
+				}
+
+				Message attachMsg = new Message();
+				attachMsg.setAttachment(new Attachment());
+				attachMsg.getAttachment().setType(Constants.Types.template.name());
+				attachMsg.getAttachment().setPayload(new Payload());
+				attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.list.name());
+				attachMsg.getAttachment().getPayload().setElements(elements);
+				jsonReplies.add(getJsonReply(senderId, attachMsg));
+
+			} else {
+				// send next item as response
+				jsonReplies = sendNextItemToBot(senderId, foundAt + 1, userRecommendations);
+			}
+
+			if (removeIndex)
+				results.remove(foundAt);
+
+		}
+
+		return jsonReplies;
+	}
+
+	private List<String> sendNextItemToBot(String senderId, int index,
+			ConcurrentHashMap<String, NearbyResponse> userRecommendations) {
+		List<String> jsonReplies = new ArrayList<String>();
+
+		NearbyResponse nearbyResponse = userRecommendations.get(senderId);
+		List<Result> res = nearbyResponse.getResults();
+		List<Element> elems = new ArrayList<Element>();
+		Message textMsg = new Message();
+
+		Result next = res.get(index);
+		elems.add(buildElement(next));
+		textMsg.setText(getDescription(next));
+		jsonReplies.add(getJsonReply(senderId, textMsg));
+
+		Message attachMsg = new Message();
+		attachMsg.setAttachment(new Attachment());
+		attachMsg.getAttachment().setType(Constants.Types.template.name());
+		attachMsg.getAttachment().setPayload(new Payload());
+		attachMsg.getAttachment().getPayload().setTemplateType(Constants.Types.generic.name());
+		attachMsg.getAttachment().getPayload().setElements(elems);
+		jsonReplies.add(getJsonReply(senderId, attachMsg));
+
+		return jsonReplies;
 	}
 
 }
