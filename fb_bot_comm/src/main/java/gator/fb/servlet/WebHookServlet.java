@@ -128,6 +128,8 @@ public class WebHookServlet extends HttpServlet {
 			return;
 		}
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
+		
+		
 		System.out.println(messagings);
 		System.out.println(messagings.size());
 
@@ -141,10 +143,10 @@ public class WebHookServlet extends HttpServlet {
 				String prevState = userState.get(senderID);
 				Message msgObj = event.getMessage();
 
-				if (prevState == null || msgObj == null || msgObj.getText() == null) {
+				if ((prevState == null || msgObj == null || msgObj.getText() == null) && userState.get(senderID) == null) {
 					handleWelcomeMessage(senderID);
 					userState.put(senderID, UserState.welcome_sent);
-					break forLoop;
+					continue;
 				}
 
 				System.out.println("User state" + userState.get(senderID));
