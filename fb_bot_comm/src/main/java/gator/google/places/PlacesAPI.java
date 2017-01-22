@@ -50,7 +50,7 @@ public class PlacesAPI {
 	private static final List<String> placeTypes = Arrays.asList("amusement_park", "aquarium", "art_gallery", "bar",
 			"bowling_alley", "casino", "library", "movie_theater", "museum", "night_club", "restaurant",
 			"shopping_mall", "spa", "stadium", "university", "zoo");
-	private static final int filterLocCount = 10;
+	private static final int filterLocCount = 8;
 	private static final int typeLocLimit = 2;
 
 	// My func

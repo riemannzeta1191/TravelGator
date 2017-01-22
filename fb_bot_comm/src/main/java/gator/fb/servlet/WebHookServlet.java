@@ -157,7 +157,9 @@ public class WebHookServlet extends HttpServlet {
 					handleWelcomeMessage(senderID);
 					userState.put(senderID, UserState.welcome_sent);
 					break;
-				} else if (postback == null && msgObj.getAttachments() != null) {
+				}
+
+				if (postback == null && msgObj.getAttachments() != null) {
 
 					// we now have the location.
 					// send places one by one.

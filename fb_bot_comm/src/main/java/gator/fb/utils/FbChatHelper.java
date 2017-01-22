@@ -356,7 +356,7 @@ public class FbChatHelper {
 		res = res.replace("{vicinity}", r.getVicinity());
 		res = res.replace("{rating}", "" + (r.getRating() == 0.0 ? (rand.nextInt(24) + 26) / 10.0 : r.getRating()));
 		res = res.replace("{reviews}", "" + rand.nextInt(100));
-		res = res.replace("{timeSpent}", "" + (rand.nextInt(10) + 1) / 2.0);
+		res = res.replace("{timeSpent}", "" + (rand.nextInt(5) + 2) / 2.0);
 
 		return res;
 	}
@@ -424,8 +424,8 @@ public class FbChatHelper {
 
 				List<Element> elements = new ArrayList<>();
 
-				for (Result r : nearbyRes.getResults()) {
-					elements.add(buildElement(r));
+				for (int i = 0; i <= 3; i++) {
+					elements.add(buildElement(results.get(i)));
 				}
 
 				Message attachMsg = new Message();
