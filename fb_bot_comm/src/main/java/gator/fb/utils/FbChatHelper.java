@@ -13,6 +13,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.apache.commons.lang3.StringUtils;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
 
 import gator.fb.contract.Attachment;
 import gator.fb.contract.Button;
@@ -361,15 +362,13 @@ public class FbChatHelper {
 		res = res.replace("{vicinity}", r.getVicinity());
 		res = res.replace("{rating}", "" + (r.getRating() == 0.0 ? (rand.nextInt(24) + 26) / 10.0 : r.getRating()));
 		res = res.replace("{reviews}", "" + rand.nextInt(100));
-		res = res.replace("{timeSpent}", "" + (rand.nextInt(5) + 2) / 2.0);
-
 		return res;
 	}
 
 	private String getSubtitle(Result r) {
 
 		String res = "People generally spend around {timeSpent} hour here.";
-		res = res.replace("{timeSpent}", "" + (int) (new Random().nextInt(10) + 2) / 2.0);
+		res = res.replace("{timeSpent}", "" + (int) (new Random().nextInt(4) + 2) / 2.0);
 		return res;
 	}
 
@@ -521,6 +520,15 @@ public class FbChatHelper {
 
 		jsonReplies.add(getJsonReply(senderId, attachMsg));
 		return jsonReplies;
+	}
+
+	public String getTypingStatus(String senderId) {
+		JsonObject obj = new JsonObject();
+		obj.addProperty("sender_action", "typing_on");
+		JsonObject recp = new JsonObject();
+		recp.addProperty("id", senderId);
+		obj.add("recipient", recp);
+		return obj.getAsString();
 	}
 
 }

@@ -169,6 +169,7 @@ public class WebHookServlet extends HttpServlet {
 						if (attach.getType().equals(Constants.Types.location.name())) {
 							double latitude = attach.getPayload().getCoordinates().getLatitude();
 							double longitude = attach.getPayload().getCoordinates().getLongitude();
+							setTypingOnStatus(senderID);
 							setGooglePlacesResponse(senderID, latitude, longitude);
 							userState.put(senderID, UserState.processing_locations);
 							break;
@@ -191,6 +192,16 @@ public class WebHookServlet extends HttpServlet {
 		}
 
 		response.setStatus(HttpServletResponse.SC_OK);
+	}
+
+	private void setTypingOnStatus(String senderID) throws Exception {
+		String typing_on = helper.getTypingStatus(senderID);
+		HttpEntity entity = new ByteArrayEntity(((String) typing_on).getBytes("UTF-8"));
+		httppost.setEntity(entity);
+		HttpResponse response = client.execute(httppost);
+		String result = EntityUtils.toString(response.getEntity());
+		if (Constants.isDebugEnabled)
+			System.out.println(result);
 	}
 
 	private void processFinalRoute(String senderID) throws Exception {

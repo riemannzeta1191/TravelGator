@@ -54,8 +54,8 @@ public class PlacesAPI {
 	public static String getDirections(NearbyResponse nearbyResponse) {
 		String locations = "";
 		try {
-			double lat = 0;
-			double lng = 0;
+			double lat = nearbyResponse.getLatitude();
+			double lng = nearbyResponse.getLongitude();
 
 			URIBuilder builder = new URIBuilder(Direction_URL);
 			builder.addParameter("key", Direction_KEY);
@@ -77,12 +77,13 @@ public class PlacesAPI {
 			builder.addParameter("waypoints", waypoints);
 
 			httpGet.setURI(builder.build());
-			// System.out.println(httpGet.getURI());
+			System.out.println(httpGet.getURI());
 
 			HttpResponse response = client.execute(httpGet);
 
 			String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-			// System.out.println(body);
+			System.out.println("###############################");
+			System.out.println(body);
 
 			JsonParser parser = new JsonParser();
 			JsonObject json = parser.parse(body).getAsJsonObject();
@@ -90,10 +91,13 @@ public class PlacesAPI {
 			JsonArray js = json.getAsJsonArray("routes");
 
 			JsonObject Json = js.get(0).getAsJsonObject();
-			// System.out.println(Json);
+			System.out.println("###############################");
+
+			System.out.println(Json);
 
 			String arr = Json.get("waypoint_order").toString();
-			// System.out.println(arr);
+			System.out.println("###############################");
+			System.out.println(arr);
 
 			String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\s", "").split(",");
 
@@ -159,6 +163,8 @@ public class PlacesAPI {
 
 			if (nearbyResponse == null) {
 				nearbyResponse = new Gson().fromJson(body, NearbyResponse.class);
+				nearbyResponse.setLatitude(latitude);
+				nearbyResponse.setLongitude(longitude);
 			}
 
 			getHighRatedLocs(new JsonParser().parse(body).getAsJsonObject().getAsJsonArray("results"), placeResults);

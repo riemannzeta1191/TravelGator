@@ -28,6 +28,30 @@ public class NearbyResponse {
 
 	@SerializedName("results")
 	@Expose
+	public double latitude;
+
+	public double getLatitude() {
+		return latitude;
+	}
+
+	public void setLatitude(double latitude) {
+		this.latitude = latitude;
+	}
+
+	public double getLongitude() {
+		return longitude;
+	}
+
+	public void setLongitude(double longitude) {
+		this.longitude = longitude;
+	}
+
+	@SerializedName("results")
+	@Expose
+	public double longitude;
+
+	@SerializedName("results")
+	@Expose
 	private List<Result> results;
 
 	@SerializedName("next_page_token")
