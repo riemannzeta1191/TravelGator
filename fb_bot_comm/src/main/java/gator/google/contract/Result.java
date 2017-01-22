@@ -81,7 +81,8 @@ public class Result {
 	@SerializedName("geometry")
 	@Expose
 	private Geometry geometry;
-
+	
+	
 
 	private String timeSpent = "1";
 
