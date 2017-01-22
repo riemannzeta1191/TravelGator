@@ -45,8 +45,7 @@ public class WebHookServlet extends HttpServlet {
 	/************* FB Chat Bot variables *************************/
 	public static final String PAGE_TOKEN = "EAAZA2eMlDKosBAOjDjCx1UhtxjrZCbGnZCf6V8fsRxqef7DiaAyxp8DJ1UwCSHExxavb8MUuFcg9iOF0xo7c69mOrHanZAZCWpuguA7pLuNXBBwbQ8nYT2f4uNWeDkxIe292iJ5s2KeRAC1nJP4xD5d0YuWiRUqn1uviLiq49MwZDZD";
 	private static final String VERIFY_TOKEN = "my_cool_funky_secret_verify_token_woah";
-	private static final String FB_MSG_URL = "https://graph.facebook.com/v2.8/me/messages?access_token="
-			+ PAGE_TOKEN;
+	private static final String FB_MSG_URL = "https://graph.facebook.com/v2.8/me/messages?access_token=" + PAGE_TOKEN;
 	private static final String CARET_URL = "https://graph.facebook.com/v2.6/me/thread_settings?access_token="
 			+ PAGE_TOKEN;
 	/*************************************************************/
@@ -61,14 +60,13 @@ public class WebHookServlet extends HttpServlet {
 
 	/*************************************************************/
 
-	final String caretURL = "https://graph.facebook.com/v2.6/me/thread_settings?access_token="
-			+ PAGE_TOKEN;
+	final String caretURL = "https://graph.facebook.com/v2.6/me/thread_settings?access_token=" + PAGE_TOKEN;
 
 	/*************************************************************/
 
 	@Override
-	protected void doPost(HttpServletRequest request,
-			HttpServletResponse response) throws ServletException, IOException {
+	protected void doPost(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		processRequest(request, response);
 	}
 
@@ -76,8 +74,7 @@ public class WebHookServlet extends HttpServlet {
 	 * get method is used by fb messenger to verify the webhook
 	 */
 	@Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response)
-			throws ServletException, IOException {
+	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		String queryString = request.getQueryString();
 		String msg = "Error, wrong token";
 
@@ -86,16 +83,13 @@ public class WebHookServlet extends HttpServlet {
 			String challenge = request.getParameter("hub.challenge");
 			// String mode = request.getParameter("hub.mode");
 
-			if (StringUtils.equals(VERIFY_TOKEN, verifyToken)
-					&& !StringUtils.isEmpty(challenge)) {
+			if (StringUtils.equals(VERIFY_TOKEN, verifyToken) && !StringUtils.isEmpty(challenge)) {
 				msg = challenge;
 			} else {
 				msg = "";
 			}
 		} else {
-			System.out
-					.println("Exception no verify token found in querystring:"
-							+ queryString);
+			System.out.println("Exception no verify token found in querystring:" + queryString);
 		}
 
 		response.getWriter().write(msg);
@@ -111,8 +105,8 @@ public class WebHookServlet extends HttpServlet {
 		final static String processing_locations = "processing_locations";
 	}
 
-	private void processRequest(HttpServletRequest httpRequest,
-			HttpServletResponse response) throws IOException, ServletException {
+	private void processRequest(HttpServletRequest httpRequest, HttpServletResponse response)
+			throws IOException, ServletException {
 		/**
 		 * store the request body in string buffer
 		 */
@@ -131,15 +125,13 @@ public class WebHookServlet extends HttpServlet {
 		/**
 		 * convert the string request body in java object
 		 */
-		FbMsgRequest fbMsgRequest = new Gson().fromJson(sb.toString(),
-				FbMsgRequest.class);
+		FbMsgRequest fbMsgRequest = new Gson().fromJson(sb.toString(), FbMsgRequest.class);
 		if (fbMsgRequest == null) {
 			System.out.println("fbMsgRequest was null");
 			response.setStatus(HttpServletResponse.SC_OK);
 			return;
 		}
-		List<Messaging> messagings = fbMsgRequest.getEntry().get(0)
-				.getMessaging();
+		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
 		System.out.println(messagings);
 		System.out.println(messagings.size());
 		for (Messaging event : messagings) {
@@ -155,8 +147,7 @@ public class WebHookServlet extends HttpServlet {
 					return;
 				}
 
-				if (msgObj != null && msgObj.getText() != null
-						&& msgObj.getText().equals("clear")) {
+				if (msgObj != null && msgObj.getText() != null && msgObj.getText().equals("clear")) {
 					userState.remove(senderID);
 					userRecommendations.remove(senderID);
 					break;
@@ -173,16 +164,11 @@ public class WebHookServlet extends HttpServlet {
 					// Attachment is there. ignore the text.
 					// Render only location as of now..
 					for (Attachment attach : msgObj.getAttachments()) {
-						if (attach.getType().equals(
-								Constants.Types.location.name())) {
-							double latitude = attach.getPayload()
-									.getCoordinates().getLatitude();
-							double longitude = attach.getPayload()
-									.getCoordinates().getLongitude();
-							setGooglePlacesResponse(senderID, latitude,
-									longitude);
-							userState.put(senderID,
-									UserState.processing_locations);
+						if (attach.getType().equals(Constants.Types.location.name())) {
+							double latitude = attach.getPayload().getCoordinates().getLatitude();
+							double longitude = attach.getPayload().getCoordinates().getLongitude();
+							setGooglePlacesResponse(senderID, latitude, longitude);
+							userState.put(senderID, UserState.processing_locations);
 							break;
 						}
 					}
@@ -200,14 +186,11 @@ public class WebHookServlet extends HttpServlet {
 		response.setStatus(HttpServletResponse.SC_OK);
 	}
 
-	private void processUserRecommendations(String senderId,
-			String payloadMessage) throws Exception {
-		List<String> res = helper.processUserRecommendations(senderId,
-				payloadMessage, userRecommendations);
+	private void processUserRecommendations(String senderId, String payloadMessage) throws Exception {
+		List<String> res = helper.processUserRecommendations(senderId, payloadMessage, userRecommendations);
 		for (String r : res) {
 
-			HttpEntity entity = new ByteArrayEntity(
-					((String) r).getBytes("UTF-8"));
+			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
 			httppost.setEntity(entity);
 			HttpResponse response = client.execute(httppost);
 			String result = EntityUtils.toString(response.getEntity());
@@ -216,16 +199,13 @@ public class WebHookServlet extends HttpServlet {
 		}
 	}
 
-	private void setGooglePlacesResponse(String senderId, double latitude,
-			double longitude) throws Exception {
+	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
 
-		List<String> res = helper.getGooglePlacesRes(senderId, latitude,
-				longitude, userRecommendations);
+		List<String> res = helper.getGooglePlacesRes(senderId, latitude, longitude, userRecommendations);
 
 		for (String r : res) {
 
-			HttpEntity entity = new ByteArrayEntity(
-					((String) r).getBytes("UTF-8"));
+			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
 			httppost.setEntity(entity);
 			HttpResponse response = client.execute(httppost);
 			String result = EntityUtils.toString(response.getEntity());
@@ -236,8 +216,7 @@ public class WebHookServlet extends HttpServlet {
 
 	private void handleWelcomeMessage(String senderId) throws Exception {
 		System.out.println("Welcome : " + senderId);
-		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId)
-				.getBytes("UTF-8"));
+		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
 		String result = EntityUtils.toString(response.getEntity());
@@ -245,6 +224,15 @@ public class WebHookServlet extends HttpServlet {
 		if (Constants.isDebugEnabled)
 			System.out.println(result);
 	}
+	/*
+	 * private void handleWelcomeMessage(String senderId) throws Exception {
+	 * HttpEntity entity = new
+	 * ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
+	 * httppost.setEntity(entity); HttpResponse response =
+	 * client.execute(httppost); String result =
+	 * EntityUtils.toString(response.getEntity()); if (Constants.isDebugEnabled)
+	 * System.out.println(result); }
+	 */
 
 	/**
 	 * get the text given by senderId and check if it's a postback (button
@@ -254,8 +242,7 @@ public class WebHookServlet extends HttpServlet {
 	 * @param text
 	 * @param isPostBack
 	 */
-	public void sendTextMessage(String senderId, String text, boolean isPostBack)
-			throws Exception {
+	public void sendTextMessage(String senderId, String text, boolean isPostBack) throws Exception {
 
 		List<String> jsonReplies = null;
 		if (isPostBack) {

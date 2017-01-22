@@ -12,6 +12,46 @@ import com.google.gson.annotations.SerializedName;
 @Generated("org.jsonschema2pojo")
 public class Result {
 
+	@SerializedName("name")
+	@Expose
+	private String name;
+
+	@SerializedName("opening_hours")
+	@Expose
+	private OpeningHours opening_hours;
+
+	@SerializedName("place_id")
+	@Expose
+	private String place_id;
+
+	@SerializedName("vicinity")
+	@Expose
+	private String vicinity;
+
+	@SerializedName("icon")
+	@Expose
+	private String icon;
+
+	@SerializedName("types")
+	@Expose
+	private String[] types;
+
+	@SerializedName("url")
+	@Expose
+	private String url;
+
+	@SerializedName("photos")
+	@Expose
+	private List<Photo> photos;
+
+	@SerializedName("geometry")
+	@Expose
+	private Geometry geometry;
+
+	@SerializedName("rating")
+	@Expose
+	private double rating;
+
 	public String getName() {
 		return name;
 	}
@@ -44,6 +84,26 @@ public class Result {
 		this.vicinity = vicinity;
 	}
 
+	public String getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = url;
+	}
+
+	public String[] getTypes() {
+		return types;
+	}
+
+	public void setTypes(String[] types) {
+		this.types = types;
+	}
+
+	public String getIcon() {
+		return icon;
+	}
+
 	public Geometry getGeometry() {
 		return geometry;
 	}
@@ -51,26 +111,6 @@ public class Result {
 	public void setGeometry(Geometry geometry) {
 		this.geometry = geometry;
 	}
-
-	@SerializedName("name")
-	@Expose
-	private String name;
-
-	@SerializedName("opening_hours")
-	@Expose
-	private OpeningHours opening_hours;
-
-	@SerializedName("place_id")
-	@Expose
-	private String place_id;
-
-	@SerializedName("vicinity")
-	@Expose
-	private String vicinity;
-
-	@SerializedName("icon")
-	@Expose
-	private String icon;
 
 	public List<Photo> getPhotos() {
 		return photos;
@@ -80,25 +120,9 @@ public class Result {
 		this.photos = photos;
 	}
 
-	@SerializedName("photos")
-	@Expose
-	private List<Photo> photos;
-
-	public String getIcon() {
-		return icon;
-	}
-
 	public void setIcon(String icon) {
 		this.icon = icon;
 	}
-
-	@SerializedName("geometry")
-	@Expose
-	private Geometry geometry;
-
-	@SerializedName("rating")
-	@Expose
-	private double rating;
 
 	public double getRating() {
 		return rating;

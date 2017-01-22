@@ -1,10 +1,13 @@
 package gator.fb.contract;
 
 import java.util.List;
+
 import javax.annotation.Generated;
+
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
+
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
@@ -23,11 +26,7 @@ public class Element {
 	@SerializedName("buttons")
 	@Expose
 	private List<Button> buttons; // = new ArrayList<Button>();
-	
-	@SerializedName("default_action")
-	@Expose
-	private DefaultAction default_action;
-	
+
 	public DefaultAction getDefault_action() {
 		return default_action;
 	}
@@ -35,6 +34,10 @@ public class Element {
 	public void setDefault_action(DefaultAction default_action) {
 		this.default_action = default_action;
 	}
+
+	@SerializedName("default_action")
+	@Expose
+	private DefaultAction default_action;
 
 	/**
 	 * 
@@ -103,8 +106,6 @@ public class Element {
 	public void setButtons(List<Button> buttons) {
 		this.buttons = buttons;
 	}
-	
-	
 
 	@Override
 	public String toString() {

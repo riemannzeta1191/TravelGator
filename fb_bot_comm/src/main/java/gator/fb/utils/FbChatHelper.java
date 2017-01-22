@@ -142,6 +142,7 @@ public class FbChatHelper {
 		QuickReply qr = new QuickReply();
 		qr.setContent_type(Constants.Types.location.name());
 		quick_replies.add(qr);
+
 		msg.setQuick_replies(quick_replies);
 		return getJsonReply(senderId, msg);
 	}
@@ -313,6 +314,7 @@ public class FbChatHelper {
 				userRecommendations.put(senderId, nearbyResponse);
 			}
 			jsonReplies = sendNextItemToBot(senderId, 0, userRecommendations);
+
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
