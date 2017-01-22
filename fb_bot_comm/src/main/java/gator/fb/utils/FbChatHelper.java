@@ -370,17 +370,17 @@ public class FbChatHelper {
 		List<Button> buttons = new ArrayList<>();
 		Button b1 = new Button();
 		b1.setTitle("Cool");
-		b1.setPayload("placeId_res YES" + place_id);
+		b1.setPayload("placeId_res YES " + place_id);
 
 		b1.setType(Constants.Types.postback.name());
 		Button b2 = new Button();
 		b2.setTitle("Maybe");
-		b2.setPayload("placeId_res MAY" + place_id);
+		b2.setPayload("placeId_res MAY " + place_id);
 		b2.setType(Constants.Types.postback.name());
 
 		Button b3 = new Button();
 		b3.setTitle("Meh");
-		b3.setPayload("placeId_res NO" + place_id);
+		b3.setPayload("placeId_res NO " + place_id);
 		b3.setType(Constants.Types.postback.name());
 
 		buttons.add(b1);

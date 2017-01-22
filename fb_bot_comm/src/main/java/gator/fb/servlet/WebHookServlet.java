@@ -25,6 +25,7 @@ import gator.fb.contract.Attachment;
 import gator.fb.contract.FbMsgRequest;
 import gator.fb.contract.Message;
 import gator.fb.contract.Messaging;
+import gator.fb.contract.Postback;
 import gator.fb.utils.Constants;
 import gator.fb.utils.FbChatHelper;
 import gator.google.contract.NearbyResponse;
@@ -129,53 +130,47 @@ public class WebHookServlet extends HttpServlet {
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
 		System.out.println(messagings);
 		System.out.println(messagings.size());
-		forLoop: for (Messaging event : messagings) {
+		for (Messaging event : messagings) {
 
 			try {
 				String senderID = event.getSender().getId();
 
-				String prevState = userState.get(senderID);
 				Message msgObj = event.getMessage();
+				Postback postback = event.getPostback();
 
-				if (prevState == null || msgObj == null) {
+				if (msgObj == null && postback != null) {
 					handleWelcomeMessage(senderID);
 					userState.put(senderID, UserState.welcome_sent);
 					break;
 				}
 
-				if (msgObj.getText() != null && msgObj.getText().equals("clear")) {
+				if (msgObj != null && msgObj.getText() != null && msgObj.getText().equals("clear")) {
 					userState.remove(senderID);
 					userRecommendations.remove(senderID);
 					break;
 				}
 
-				switch (prevState) {
+				if (postback == null && msgObj.getAttachments() != null) {
 
-				case UserState.welcome_sent:
 					// we now have the location.
 					// send places one by one.
-					if (msgObj.getAttachments() != null) {
-						// Attachment is there. ignore the text ?
-						// Render only location as of now..
-						for (Attachment attach : msgObj.getAttachments()) {
-							if (attach.getType().equals(Constants.Types.location.name())) {
-								double latitude = attach.getPayload().getCoordinates().getLatitude();
-								double longitude = attach.getPayload().getCoordinates().getLongitude();
-								setGooglePlacesResponse(senderID, latitude, longitude);
-								userState.put(senderID, UserState.processing_locations);
-								break forLoop;
-							}
+					// Attachment is there. ignore the text.
+					// Render only location as of now..
+					for (Attachment attach : msgObj.getAttachments()) {
+						if (attach.getType().equals(Constants.Types.location.name())) {
+							double latitude = attach.getPayload().getCoordinates().getLatitude();
+							double longitude = attach.getPayload().getCoordinates().getLongitude();
+							setGooglePlacesResponse(senderID, latitude, longitude);
+							userState.put(senderID, UserState.processing_locations);
+							break;
 						}
 					}
-					break;
-
-				case UserState.processing_locations:
-					System.out.println("------->" + msgObj.getText());
-					processUserRecommendations(senderID, msgObj.getText());
-					break;
-				default:
-					break;
+				} else if (postback != null) {
+					processUserRecommendations(senderID, postback.getPayload());
 				}
+
+				System.out.println("------->" + msgObj.getText());
+				processUserRecommendations(senderID, msgObj.getText());
 
 				System.out.println(msgObj);
 				if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
