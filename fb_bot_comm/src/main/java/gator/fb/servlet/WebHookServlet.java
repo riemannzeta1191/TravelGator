@@ -138,15 +138,20 @@ public class WebHookServlet extends HttpServlet {
 				Message msgObj = event.getMessage();
 				Postback postback = event.getPostback();
 
-				if (msgObj == null && postback != null) {
-					handleWelcomeMessage(senderID);
-					userState.put(senderID, UserState.welcome_sent);
-					break;
+				if (msgObj == null && postback == null) {
+					System.err.println("No msg or postback. return");
+					return;
 				}
 
 				if (msgObj != null && msgObj.getText() != null && msgObj.getText().equals("clear")) {
 					userState.remove(senderID);
 					userRecommendations.remove(senderID);
+					break;
+				}
+
+				if (postback == null) {
+					handleWelcomeMessage(senderID);
+					userState.put(senderID, UserState.welcome_sent);
 					break;
 				}
 
