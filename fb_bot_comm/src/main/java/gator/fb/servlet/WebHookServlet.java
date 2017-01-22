@@ -136,14 +136,13 @@ public class WebHookServlet extends HttpServlet {
 				String senderID = event.getSender().getId();
 
 				String prevState = userState.get(senderID);
+				Message msgObj = event.getMessage();
 
-				if (prevState == null) {
+				if (prevState == null || msgObj == null) {
 					handleWelcomeMessage(senderID);
 					userState.put(senderID, UserState.welcome_sent);
 					break;
 				}
-
-				Message msgObj = event.getMessage();
 
 				if (msgObj != null && msgObj.getText().equals("clear")) {
 					userState.remove(senderID);
@@ -168,8 +167,8 @@ public class WebHookServlet extends HttpServlet {
 								break;
 							}
 						}
+						userState.put(senderID, UserState.processing_locations);
 					}
-					userState.put(senderID, UserState.processing_locations);
 					break;
 
 				case UserState.processing_locations:
