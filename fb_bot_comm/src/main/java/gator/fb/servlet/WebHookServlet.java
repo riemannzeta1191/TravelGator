@@ -170,18 +170,8 @@ public class WebHookServlet extends HttpServlet {
 					}
 				} else if (postback != null) {
 					processUserRecommendations(senderID, postback.getPayload());
-				}
-
-				System.out.println("------->" + msgObj.getText());
-				processUserRecommendations(senderID, msgObj.getText());
-
-				System.out.println(msgObj);
-				if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
-					// welcome message.
-
-					continue;
 				} else {
-					System.out.println("Else case !!");
+					System.err.println("Ayyo :(");
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block

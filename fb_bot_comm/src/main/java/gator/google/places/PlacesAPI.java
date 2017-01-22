@@ -34,7 +34,7 @@ public class PlacesAPI {
 		System.out.println(httpGet.getURI());
 
 		String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-		System.out.println(body);
+		//System.out.println(body);
 		NearbyResponse nearbyResponse = new Gson().fromJson(body, NearbyResponse.class);
 		System.out.println(nearbyResponse.getResults().size());
 		return nearbyResponse;
