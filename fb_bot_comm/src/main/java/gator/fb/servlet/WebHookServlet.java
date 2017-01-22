@@ -134,7 +134,10 @@ public class WebHookServlet extends HttpServlet {
 			try {
 				String senderID = event.getSender().getId();
 				Message msgObj = event.getMessage();
-				if (msgObj.getAttachments() != null) {
+				if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
+					handleWelcomeMessage(senderID);
+					continue;
+				} else if (msgObj.getAttachments() != null) {
 					for (Attachment attach : msgObj.getAttachments()) {
 						if (attach.getType().equals(Constants.Types.location.name())) {
 							double latitude = attach.getPayload().getCoordinates().getLatitude();
@@ -144,9 +147,6 @@ public class WebHookServlet extends HttpServlet {
 							break forLoop;
 						}
 					}
-				} else if (msgObj == null || msgObj.getText() == null || Constants.isCommand(msgObj.getText())) {
-					handleWelcomeMessage(senderID);
-					continue;
 				} else {
 					System.out.println("Else case");
 				}
