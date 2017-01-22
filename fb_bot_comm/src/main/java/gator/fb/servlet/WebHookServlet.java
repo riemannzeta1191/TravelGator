@@ -128,73 +128,27 @@ public class WebHookServlet extends HttpServlet {
 			return;
 		}
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
-		
-		
-		System.out.println(messagings);
-		System.out.println(messagings.size());
 
 		forLoop: for (Messaging event : messagings) {
-			if (event == null)
-				continue;
-			
+
 			try {
 				String senderID = event.getSender().getId();
-
-				String prevState = userState.get(senderID);
 				Message msgObj = event.getMessage();
-
-				if ((prevState == null || msgObj == null || msgObj.getText() == null) && userState.get(senderID) == null) {
-					handleWelcomeMessage(senderID);
-					userState.put(senderID, UserState.welcome_sent);
-					continue;
-				}
-
-				System.out.println("User state" + userState.get(senderID));
-
-				if (msgObj != null && msgObj.getText().equals("clear")) {
-					userState.remove(senderID);
-					helper.clearUserSenderID(senderID);
-					break forLoop;
-				}
-
-				switch (prevState) {
-
-				case UserState.welcome_sent:
-					// we got the location.
-					// send places one by one.
-					if (msgObj.getAttachments() != null) {
-
-						// Attachment is there. ignore the text ?
-						// Render only location as of now..
-						for (Attachment attach : msgObj.getAttachments()) {
-							if (attach.getType().equals(Constants.Types.location.name())) {
-								double latitude = attach.getPayload().getCoordinates().getLatitude();
-								double longitude = attach.getPayload().getCoordinates().getLongitude();
-								setGooglePlacesResponse(senderID, latitude, longitude);
-								userState.put(senderID, UserState.processing_locations);
-								break forLoop;
-							}
+				if (msgObj.getAttachments() != null) {
+					for (Attachment attach : msgObj.getAttachments()) {
+						if (attach.getType().equals(Constants.Types.location.name())) {
+							double latitude = attach.getPayload().getCoordinates().getLatitude();
+							double longitude = attach.getPayload().getCoordinates().getLongitude();
+							setGooglePlacesResponse(senderID, latitude, longitude);
+							userState.put(senderID, UserState.processing_locations);
+							break forLoop;
 						}
 					}
-					break;
-
-				case UserState.processing_locations:
-					System.out.println("processing_locations------->" + msgObj.getText());
-					processUserRecommendations(senderID, msgObj.getText());
-					break;
-				default:
-					System.out.println("default acse");
-
-					break;
-				}
-
-				System.out.println(msgObj);
-				if (msgObj == null || msgObj.getText() == null || !Constants.isCommand(msgObj.getText())) {
-					// welcome message.
-
+				} else if (msgObj == null || msgObj.getText() == null || Constants.isCommand(msgObj.getText())) {
+					handleWelcomeMessage(senderID);
 					continue;
 				} else {
-					System.out.println("Else case !!");
+					System.out.println("Else case");
 				}
 			} catch (Exception e) {
 				// TODO Auto-generated catch block
