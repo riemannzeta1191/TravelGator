@@ -1,7 +1,6 @@
 package gator.google.places;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -20,45 +19,25 @@ import com.google.gson.JsonParser;
 import gator.google.contract.NearbyResponse;
 import gator.google.contract.PlaceResult;
 import gator.google.contract.Result;
+import gator.utils.APIConstants;
+import gator.utils.Constants;
 
 public class PlacesAPI {
 
-	static final String API_KEY = "AIzaSyCXWBHckGfNWwlrymhKdU5VuPkMWaVwbmg";
-
-	static final String Direction_KEY = "AIzaSyC4aXq3pZnizKtXqU9eC1_z1KHprAAPjFc";
-	static final String NEARBY_URL = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
-	static final String Direction_URL = "https://maps.googleapis.com/maps/api/directions/json?";
-	static final String Map_URL = "https://www.google.com/maps/dir";
-
-	static final String API_KEY_PHOTO = "AIzaSyB7_drW4kjos6Y-OVk8jLs7h6CwkprrkV4";
-
-	static final String NEARBY_URL1 = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?";
-	static final String URL_PHOTO = "https://maps.googleapis.com/maps/api/place/photo?key=" + API_KEY_PHOTO
-			+ "&photoreference={photo_reference}&maxwidth=400";
-
 	private static final HttpClient client = HttpClientBuilder.create().build();
-	private static final HttpGet httpGet = new HttpGet(NEARBY_URL + API_KEY);
+	private static final HttpGet httpGet = new HttpGet();
 
-	static final String PLACES_API_KEY = "AIzaSyDeUu4Jo92ulHd-dH4FAhu1tCfBKjHA7KU";
-	static final String PLACE_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json?";
-	static final String RADAR_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/radarsearch/json?";
-	private static final HttpGet placeHttpGet = new HttpGet(PLACE_DETAILS_URL);
-	private static final HttpGet nearbyPlacesHttpGet = new HttpGet(RADAR_SEARCH_URL);
-	private static final List<String> placeTypes = Arrays.asList("amusement_park", "aquarium", "art_gallery", "bar",
-			"bowling_alley", "casino", "library", "movie_theater", "museum", "night_club", "restaurant",
-			"shopping_mall", "spa", "stadium", "university", "zoo");
 	private static final int filterLocCount = 8;
 	private static final int typeLocLimit = 2;
 
-	// My func
 	public static String getDirections(NearbyResponse nearbyResponse) {
 		String locations = "";
 		try {
 			double lat = nearbyResponse.getLatitude();
 			double lng = nearbyResponse.getLongitude();
 
-			URIBuilder builder = new URIBuilder(Direction_URL);
-			builder.addParameter("key", Direction_KEY);
+			URIBuilder builder = new URIBuilder(APIConstants.getURL_DIRECTION());
+			builder.addParameter("key", APIConstants.getAPI_KEY_DIRECTION());
 			builder.addParameter("origin", lat + "," + lng);
 			builder.addParameter("destination", lat + "," + lng);
 			List<Result> places = nearbyResponse.getResults();
@@ -77,13 +56,10 @@ public class PlacesAPI {
 			builder.addParameter("waypoints", waypoints);
 
 			httpGet.setURI(builder.build());
-			System.out.println(httpGet.getURI());
 
 			HttpResponse response = client.execute(httpGet);
 
 			String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-			System.out.println("###############################");
-			System.out.println(body);
 
 			JsonParser parser = new JsonParser();
 			JsonObject json = parser.parse(body).getAsJsonObject();
@@ -91,13 +67,8 @@ public class PlacesAPI {
 			JsonArray js = json.getAsJsonArray("routes");
 
 			JsonObject Json = js.get(0).getAsJsonObject();
-			System.out.println("###############################");
-
-			System.out.println(Json);
 
 			String arr = Json.get("waypoint_order").toString();
-			System.out.println("###############################");
-			System.out.println(arr);
 
 			String[] items = arr.replaceAll("\\[", "").replaceAll("\\]", "").replaceAll("\\s", "").split(",");
 
@@ -107,8 +78,7 @@ public class PlacesAPI {
 				try {
 					results[i] = Integer.parseInt(items[i]);
 				} catch (NumberFormatException nfe) {
-					// NOTE: write something here if you need to recover from
-					// formatting errors
+
 				}
 			}
 
@@ -120,9 +90,7 @@ public class PlacesAPI {
 				optimumOrder.add(places.get(results[i]));
 			}
 
-			// optimumOrder = nearbyResponse.getResults();
-
-			builder = new URIBuilder(Map_URL);
+			builder = new URIBuilder(APIConstants.getURL_MAP());
 
 			locations = locations + "/" + nearbyResponse.getLatitude() + "," + nearbyResponse.getLongitude();
 
@@ -135,7 +103,7 @@ public class PlacesAPI {
 
 			locations = locations + "/" + nearbyResponse.getLatitude() + "," + nearbyResponse.getLongitude();
 
-			locations = Map_URL + locations;
+			locations = APIConstants.getURL_MAP() + locations;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -143,23 +111,19 @@ public class PlacesAPI {
 		return locations;
 	}
 
-	public static String getPhotoURL(String photo_reference) {
-		return URL_PHOTO.replace("{photo_reference}", photo_reference);
-	}
-
 	public static NearbyResponse getNearbyPlaces(double latitude, double longitude) throws Exception {
 
 		NearbyResponse nearbyResponse = null;
 		List<Result> placeResults = new ArrayList<>();
-		for (String type : placeTypes) {
+		for (String type : Constants.placeTypes) {
 			// System.out.println(type);
-			URIBuilder builder = new URIBuilder(RADAR_SEARCH_URL);
-			builder.addParameter("key", PLACES_API_KEY);
+			URIBuilder builder = new URIBuilder(APIConstants.getURL_RADAR_SEARCH());
+			builder.addParameter("key", APIConstants.getAPI_KEY_PLACES());
 			builder.addParameter("location", latitude + "," + longitude);
 			builder.addParameter("radius", "5000");
 			builder.addParameter("type", type);
-			nearbyPlacesHttpGet.setURI(builder.build());
-			HttpResponse response = client.execute(nearbyPlacesHttpGet);
+			httpGet.setURI(builder.build());
+			HttpResponse response = client.execute(httpGet);
 
 			// System.out.println(httpGet.getURI());
 
@@ -187,16 +151,13 @@ public class PlacesAPI {
 		int thisIter = 0;
 		for (JsonElement obj : arrayResults) {
 			String placeId = obj.getAsJsonObject().get("place_id").getAsString();
-			URIBuilder builder = new URIBuilder(PLACE_DETAILS_URL);
-			builder.addParameter("key", PLACES_API_KEY);
+			URIBuilder builder = new URIBuilder(APIConstants.getURL_PLACE_DETAILS());
+			builder.addParameter("key", APIConstants.getAPI_KEY_PLACES());
 			builder.addParameter("placeid", placeId);
-			placeHttpGet.setURI(builder.build());
-			HttpResponse response = client.execute(placeHttpGet);
+			httpGet.setURI(builder.build());
+			HttpResponse response = client.execute(httpGet);
 			String body = EntityUtils.toString(response.getEntity(), "UTF-8");
-			// System.out.println(body);
 			PlaceResult pr = new Gson().fromJson(body, PlaceResult.class);
-			// System.out.println(pr + "--" + (pr.getResult()));
-			// System.out.println(placeHttpGet.getURI());
 			double rating = pr.getResult().getRating();
 			if (rating > 3.8) {
 				thisIter++;

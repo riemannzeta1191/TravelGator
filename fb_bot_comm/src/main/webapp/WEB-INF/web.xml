@@ -3,6 +3,10 @@
  "http://java.sun.com/dtd/web-app_2_3.dtd" >
 
 <web-app>
+	<context-param>
+		<param-name>propertyFilePath</param-name>
+		<param-value>C:\\Users\\Lavenger\\git\\config\\gatorknuckle.properties</param-value>
+	</context-param>
 	<servlet>
 		<servlet-name>WebHookServlet</servlet-name>
 		<servlet-class>gator.fb.servlet.WebHookServlet</servlet-class>

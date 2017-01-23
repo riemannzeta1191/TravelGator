@@ -1,8 +1,10 @@
 package gator.fb.servlet;
 
 import java.io.BufferedReader;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.List;
+import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 
 import javax.servlet.ServletException;
@@ -20,49 +22,55 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
 import gator.fb.contract.Attachment;
 import gator.fb.contract.FbMsgRequest;
 import gator.fb.contract.Message;
 import gator.fb.contract.Messaging;
 import gator.fb.contract.Postback;
-import gator.fb.utils.Constants;
 import gator.fb.utils.FbChatHelper;
 import gator.google.contract.NearbyResponse;
+import gator.utils.Constants;
 
 /**
- * 
  * @author takirala
- * 
- * 
  */
 public class WebHookServlet extends HttpServlet {
 
-	private static final long serialVersionUID = -2326475169699351010L;
+	private static final long serialVersionUID = 1L;
 
 	/************* FB Chat Bot variables *************************/
-	public static final String PAGE_TOKEN = "EAAZA2eMlDKosBAOjDjCx1UhtxjrZCbGnZCf6V8fsRxqef7DiaAyxp8DJ1UwCSHExxavb8MUuFcg9iOF0xo7c69mOrHanZAZCWpuguA7pLuNXBBwbQ8nYT2f4uNWeDkxIe292iJ5s2KeRAC1nJP4xD5d0YuWiRUqn1uviLiq49MwZDZD";
-	private static final String VERIFY_TOKEN = "my_cool_funky_secret_verify_token_woah";
-	private static final String FB_MSG_URL = "https://graph.facebook.com/v2.8/me/messages?access_token=" + PAGE_TOKEN;
-	private static final String CARET_URL = "https://graph.facebook.com/v2.6/me/thread_settings?access_token="
-			+ PAGE_TOKEN;
-	/*************************************************************/
+	private static String PAGE_TOKEN;
+	private static String VERIFY_TOKEN;
+	private static String FB_MSG_URL;
+	private static String CARET_URL;
+	private static String PROFILE_URL;
 
-	/******* for making a post call to fb messenger api **********/
 	private static final HttpClient client = HttpClientBuilder.create().build();
 	private static final HttpPost httppost = new HttpPost(FB_MSG_URL);
 	private static final FbChatHelper helper = new FbChatHelper();
+	/*************************************************************/
 
-	private static ConcurrentHashMap<String, String> userState = new ConcurrentHashMap<>();
 	private static ConcurrentHashMap<String, NearbyResponse> userRecommendations = new ConcurrentHashMap<>();
 
-	/*************************************************************/
+	@Override
+	public void init() throws ServletException {
+		httppost.setHeader("Content-Type", "application/json");
+		System.out.println("webhook servlet created!!");
+		Properties prop = new Properties();
+		try {
+			String fileName = getServletContext().getInitParameter("propertyFilePath");
+			System.out.println("Loading file : " + fileName);
+			prop.load(new FileInputStream(fileName));
+			initializeParams(prop);
 
-	final String caretURL = "https://graph.facebook.com/v2.6/me/thread_settings?access_token=" + PAGE_TOKEN;
-
-	/*************************************************************/
+			System.out.println(prop.size());
+		} catch (Exception e) {
+			e.printStackTrace();
+			System.exit(0);
+		}
+		setCaret();
+	}
 
 	@Override
 	protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -71,10 +79,11 @@ public class WebHookServlet extends HttpServlet {
 	}
 
 	/**
-	 * get method is used by fb messenger to verify the webhook
+	 * Get method is used by FB messenger to verify the webhook
 	 */
 	@Override
-	public void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+	protected void doGet(HttpServletRequest request, HttpServletResponse response)
+			throws ServletException, IOException {
 		String queryString = request.getQueryString();
 		String msg = "Error, wrong token";
 
@@ -99,10 +108,16 @@ public class WebHookServlet extends HttpServlet {
 		return;
 	}
 
-	static final class UserState {
-		final static String welcome_sent = "welcome_sent";
-		final static String location_received = "location_received";
-		final static String processing_locations = "processing_locations";
+	public static String getPROFILE_URL(String senderId) {
+		return PROFILE_URL.replace("{SENDER_ID}", senderId);
+	}
+
+	private void initializeParams(Properties prop) {
+		PAGE_TOKEN = prop.getProperty(PAGE_TOKEN);
+		VERIFY_TOKEN = prop.getProperty(VERIFY_TOKEN);
+		FB_MSG_URL = prop.getProperty(FB_MSG_URL) + PAGE_TOKEN;
+		CARET_URL = prop.getProperty(CARET_URL) + PAGE_TOKEN;
+		PROFILE_URL = prop.getProperty(PROFILE_URL) + PAGE_TOKEN;
 	}
 
 	private void processRequest(HttpServletRequest httpRequest, HttpServletResponse response)
@@ -132,8 +147,6 @@ public class WebHookServlet extends HttpServlet {
 			return;
 		}
 		List<Messaging> messagings = fbMsgRequest.getEntry().get(0).getMessaging();
-		System.out.println(messagings);
-		System.out.println(messagings.size());
 		for (Messaging event : messagings) {
 
 			try {
@@ -148,14 +161,12 @@ public class WebHookServlet extends HttpServlet {
 				}
 
 				if (msgObj != null && msgObj.getText() != null && msgObj.getText().equals("clear")) {
-					userState.remove(senderID);
 					userRecommendations.remove(senderID);
 					break;
 				}
 
 				if (postback == null && msgObj.getAttachments() == null) {
 					handleWelcomeMessage(senderID);
-					userState.put(senderID, UserState.welcome_sent);
 					break;
 				}
 
@@ -171,7 +182,6 @@ public class WebHookServlet extends HttpServlet {
 							double longitude = attach.getPayload().getCoordinates().getLongitude();
 							setTypingOnStatus(senderID);
 							setGooglePlacesResponse(senderID, latitude, longitude);
-							userState.put(senderID, UserState.processing_locations);
 							break;
 						}
 					}
@@ -180,18 +190,29 @@ public class WebHookServlet extends HttpServlet {
 
 					if (payload.startsWith("LoadMore")) {
 						processFinalRoute(senderID);
+						userRecommendations.remove(senderID);
 					} else
 						processUserRecommendations(senderID, postback.getPayload());
 				} else {
-					System.err.println("Ayyo :(");
+					System.err.println("Unknown Case");
 				}
 			} catch (Exception e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 		}
 
 		response.setStatus(HttpServletResponse.SC_OK);
+	}
+
+	private void handleWelcomeMessage(String senderId) throws Exception {
+		System.out.println("Welcome : " + senderId);
+		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
+		httppost.setEntity(entity);
+		HttpResponse response = client.execute(httppost);
+		String result = EntityUtils.toString(response.getEntity());
+
+		if (Constants.isDebugEnabled)
+			System.out.println(result);
 	}
 
 	private void setTypingOnStatus(String senderID) throws Exception {
@@ -204,8 +225,10 @@ public class WebHookServlet extends HttpServlet {
 			System.out.println(result);
 	}
 
-	private void processFinalRoute(String senderID) throws Exception {
-		List<String> res = helper.processFinalRoute(senderID, userRecommendations);
+	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
+
+		List<String> res = helper.getGooglePlacesRes(senderId, latitude, longitude, userRecommendations);
+
 		for (String r : res) {
 
 			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
@@ -230,10 +253,8 @@ public class WebHookServlet extends HttpServlet {
 		}
 	}
 
-	private void setGooglePlacesResponse(String senderId, double latitude, double longitude) throws Exception {
-
-		List<String> res = helper.getGooglePlacesRes(senderId, latitude, longitude, userRecommendations);
-
+	private void processFinalRoute(String senderID) throws Exception {
+		List<String> res = helper.processFinalRoute(senderID, userRecommendations);
 		for (String r : res) {
 
 			HttpEntity entity = new ByteArrayEntity(((String) r).getBytes("UTF-8"));
@@ -245,85 +266,23 @@ public class WebHookServlet extends HttpServlet {
 		}
 	}
 
-	private void handleWelcomeMessage(String senderId) throws Exception {
-		System.out.println("Welcome : " + senderId);
-		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
-		httppost.setEntity(entity);
-		HttpResponse response = client.execute(httppost);
-		String result = EntityUtils.toString(response.getEntity());
+	private void setCaret() {
 
-		if (Constants.isDebugEnabled)
-			System.out.println(result);
-	}
-	/*
-	 * private void handleWelcomeMessage(String senderId) throws Exception {
-	 * HttpEntity entity = new
-	 * ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
-	 * httppost.setEntity(entity); HttpResponse response =
-	 * client.execute(httppost); String result =
-	 * EntityUtils.toString(response.getEntity()); if (Constants.isDebugEnabled)
-	 * System.out.println(result); }
-	 */
-
-	/**
-	 * get the text given by senderId and check if it's a postback (button
-	 * click) or a direct message by senderId and reply accordingly
-	 * 
-	 * @param senderId
-	 * @param text
-	 * @param isPostBack
-	 */
-	public void sendTextMessage(String senderId, String text, boolean isPostBack) throws Exception {
-
-		List<String> jsonReplies = null;
-		if (isPostBack) {
-			jsonReplies = helper.getPostBackReplies(senderId, text);
-		} else {
-			jsonReplies = helper.getReplies(senderId, text);
-		}
-
-		for (String jsonReply : jsonReplies) {
-			HttpEntity entity = new ByteArrayEntity(jsonReply.getBytes("UTF-8"));
+		String body = "{\"setting_type\" : \"call_to_actions\",\"thread_state\" : \"existing_thread\",\"call_to_actions\":[{\"type\":\"postback\",\"title\":\"Help\", \"payload\":\"DEVELOPER_DEFINED_PAYLOAD_FOR_HELP\"},{\"type\":\"postback\",\"title\":\"Start a New Order\",\"payload\":\"DEVELOPER_DEFINED_PAYLOAD_FOR_START_ORDER\"},{\"type\":\"web_url\",\"title\":\"Checkout\",\"url\":\"http://petersapparel.parseapp.com/checkout\",\"webview_height_ratio\": \"full\",\"messenger_extensions\": true},{\"type\":\"web_url\",\"title\":\"View Website\",\"url\":\"http://petersapparel.parseapp.com/\"}]}";
+		try {
+			HttpEntity entity = new ByteArrayEntity(body.getBytes("UTF-8"));
+			HttpPost httppost = new HttpPost(CARET_URL);
 			httppost.setEntity(entity);
-			HttpResponse response = client.execute(httppost);
-			String result = EntityUtils.toString(response.getEntity());
-			System.out.println(result);
+			client.execute(httppost);
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
+
 	}
 
 	@Override
 	public void destroy() {
 		System.out.println("webhook Servlet Destroyed");
-	}
-
-	@Override
-	public void init() throws ServletException {
-		httppost.setHeader("Content-Type", "application/json");
-		System.out.println("webhook servlet created!!");
-		setCaret();
-	}
-
-	public void setCaret() {
-
-		String body = "{\"setting_type\" : \"call_to_actions\",\"thread_state\" : \"existing_thread\",\"call_to_actions\":[{\"type\":\"postback\",\"title\":\"Help\", \"payload\":\"DEVELOPER_DEFINED_PAYLOAD_FOR_HELP\"},{\"type\":\"postback\",\"title\":\"Start a New Order\",\"payload\":\"DEVELOPER_DEFINED_PAYLOAD_FOR_START_ORDER\"},{\"type\":\"web_url\",\"title\":\"Checkout\",\"url\":\"http://petersapparel.parseapp.com/checkout\",\"webview_height_ratio\": \"full\",\"messenger_extensions\": true},{\"type\":\"web_url\",\"title\":\"View Website\",\"url\":\"http://petersapparel.parseapp.com/\"}]}";
-		JsonParser parser = new JsonParser();
-		JsonObject json = parser.parse(body).getAsJsonObject();
-
-		HttpEntity entity;
-		try {
-			entity = new ByteArrayEntity(body.getBytes("UTF-8"));
-
-			HttpPost httppost = new HttpPost(CARET_URL);
-
-			httppost.setEntity(entity);
-
-			HttpResponse response = client.execute(httppost);
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-
 	}
 
 }
