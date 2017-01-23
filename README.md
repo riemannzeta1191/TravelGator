@@ -2,8 +2,6 @@
 
 The motivation for us was to develop something that could be accessible easily by anyone and can plan and assist in the best possible way to spend a few hours of one's time. When it comes to something that can be easily accessible to anyone the first thing that came across our mind was a personal assistant or a chatbot.
 
-# What & How.
-
 ## What it does
 This FB messenger chatbot interacts with the user whenever it is prompted to by the user and asks for the user for his current location. Based on this it gives a suggestion of 10 possible places to visit based on the ratings of the places. To add a personal touch the bot uses the information of the user's friends who visited and liked these places in order provide a concise list of places matching the user's tastes and interests. These could restaurants or sight-seeing places, etc. It shows the places and the user can select what to be on the list and what not and based on this final list it generates a google map showing the optimal route and order in which the places need to be visited enhancing the user's experience.
 
