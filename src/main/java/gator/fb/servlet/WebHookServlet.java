@@ -43,7 +43,6 @@ public class WebHookServlet extends HttpServlet {
 	private static String PAGE_TOKEN;
 	private static String VERIFY_TOKEN;
 	private static String FB_MSG_URL;
-	private static String CARET_URL;
 	private static String PROFILE_URL;
 
 	private static HttpClient client;
@@ -69,7 +68,6 @@ public class WebHookServlet extends HttpServlet {
 		}
 		httppost.setHeader("Content-Type", "application/json");
 		System.out.println("webhook servlet created!!");
-		setCaret();
 	}
 
 	@Override
@@ -116,7 +114,6 @@ public class WebHookServlet extends HttpServlet {
 		PAGE_TOKEN = prop.getProperty("PAGE_TOKEN");
 		VERIFY_TOKEN = prop.getProperty("VERIFY_TOKEN");
 		FB_MSG_URL = prop.getProperty("FB_MSG_URL") + PAGE_TOKEN;
-		CARET_URL = prop.getProperty("CARET_URL") + PAGE_TOKEN;
 		PROFILE_URL = prop.getProperty("PROFILE_URL") + PAGE_TOKEN;
 
 		httppost = new HttpPost(FB_MSG_URL);
@@ -271,19 +268,6 @@ public class WebHookServlet extends HttpServlet {
 		}
 	}
 
-	private void setCaret() {
-
-		String body = "{\"setting_type\" : \"call_to_actions\",\"thread_state\" : \"existing_thread\",\"call_to_actions\":[{\"type\":\"postback\",\"title\":\"Help\", \"payload\":\"DEVELOPER_DEFINED_PAYLOAD_FOR_HELP\"},{\"type\":\"postback\",\"title\":\"Start a New Order\",\"payload\":\"DEVELOPER_DEFINED_PAYLOAD_FOR_START_ORDER\"},{\"type\":\"web_url\",\"title\":\"Checkout\",\"url\":\"http://petersapparel.parseapp.com/checkout\",\"webview_height_ratio\": \"full\",\"messenger_extensions\": true},{\"type\":\"web_url\",\"title\":\"View Website\",\"url\":\"http://petersapparel.parseapp.com/\"}]}";
-		try {
-			HttpEntity entity = new ByteArrayEntity(body.getBytes("UTF-8"));
-			HttpPost httppost = new HttpPost(CARET_URL);
-			httppost.setEntity(entity);
-			client.execute(httppost);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-	}
 
 	@Override
 	public void destroy() {
