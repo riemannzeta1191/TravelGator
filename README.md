@@ -88,3 +88,11 @@ To show detailed info of each place.
 ### [Send API - List Template](https://developers.facebook.com/docs/messenger-platform/send-api-reference/list-template)
 
 To show summary view of selected places.
+
+## Owners
+* [Manoj Battula](https://github.com/ManojNVOB)
+* [Prashanth Peddabbu](https://github.com/ppeddabbu)
+* [Sai Vishnu Teja Vempali](https://github.com/saivempali)
+* [Tarun Gupta Akirala](https://github.com/takirala)
+
+Write to us for any feedback or queries.
