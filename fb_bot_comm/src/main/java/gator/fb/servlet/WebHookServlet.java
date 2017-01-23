@@ -46,29 +46,29 @@ public class WebHookServlet extends HttpServlet {
 	private static String CARET_URL;
 	private static String PROFILE_URL;
 
-	private static final HttpClient client = HttpClientBuilder.create().build();
-	private static final HttpPost httppost = new HttpPost(FB_MSG_URL);
-	private static final FbChatHelper helper = new FbChatHelper();
+	private static HttpClient client;
+	private static HttpPost httppost;
+	private static FbChatHelper helper;
 	/*************************************************************/
 
 	private static ConcurrentHashMap<String, NearbyResponse> userRecommendations = new ConcurrentHashMap<>();
 
 	@Override
 	public void init() throws ServletException {
-		httppost.setHeader("Content-Type", "application/json");
-		System.out.println("webhook servlet created!!");
+
 		Properties prop = new Properties();
 		try {
 			String fileName = getServletContext().getInitParameter("propertyFilePath");
 			System.out.println("Loading file : " + fileName);
 			prop.load(new FileInputStream(fileName));
 			initializeParams(prop);
-
 			System.out.println(prop.size());
 		} catch (Exception e) {
 			e.printStackTrace();
 			System.exit(0);
 		}
+		httppost.setHeader("Content-Type", "application/json");
+		System.out.println("webhook servlet created!!");
 		setCaret();
 	}
 
@@ -113,11 +113,15 @@ public class WebHookServlet extends HttpServlet {
 	}
 
 	private void initializeParams(Properties prop) {
-		PAGE_TOKEN = prop.getProperty(PAGE_TOKEN);
-		VERIFY_TOKEN = prop.getProperty(VERIFY_TOKEN);
-		FB_MSG_URL = prop.getProperty(FB_MSG_URL) + PAGE_TOKEN;
-		CARET_URL = prop.getProperty(CARET_URL) + PAGE_TOKEN;
-		PROFILE_URL = prop.getProperty(PROFILE_URL) + PAGE_TOKEN;
+		PAGE_TOKEN = prop.getProperty("PAGE_TOKEN");
+		VERIFY_TOKEN = prop.getProperty("VERIFY_TOKEN");
+		FB_MSG_URL = prop.getProperty("FB_MSG_URL") + PAGE_TOKEN;
+		CARET_URL = prop.getProperty("CARET_URL") + PAGE_TOKEN;
+		PROFILE_URL = prop.getProperty("PROFILE_URL") + PAGE_TOKEN;
+
+		httppost = new HttpPost("FB_MSG_URL");
+		client = HttpClientBuilder.create().build();
+		helper = new FbChatHelper();
 	}
 
 	private void processRequest(HttpServletRequest httpRequest, HttpServletResponse response)
