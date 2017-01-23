@@ -119,7 +119,7 @@ public class WebHookServlet extends HttpServlet {
 		CARET_URL = prop.getProperty("CARET_URL") + PAGE_TOKEN;
 		PROFILE_URL = prop.getProperty("PROFILE_URL") + PAGE_TOKEN;
 
-		httppost = new HttpPost("FB_MSG_URL");
+		httppost = new HttpPost(FB_MSG_URL);
 		client = HttpClientBuilder.create().build();
 		helper = new FbChatHelper();
 	}
@@ -211,6 +211,7 @@ public class WebHookServlet extends HttpServlet {
 	private void handleWelcomeMessage(String senderId) throws Exception {
 		System.out.println("Welcome : " + senderId);
 		HttpEntity entity = new ByteArrayEntity(helper.getWelcomeMsg(senderId).getBytes("UTF-8"));
+		System.out.println(httppost.getURI());
 		httppost.setEntity(entity);
 		HttpResponse response = client.execute(httppost);
 		String result = EntityUtils.toString(response.getEntity());

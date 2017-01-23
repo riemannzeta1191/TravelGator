@@ -7,6 +7,21 @@ The motivation for us was to develop something that could be accessible easily b
 ## What it does
 This FB messenger chatbot interacts with the user whenever it is prompted to by the user and asks for the user for his current location. Based on this it gives a suggestion of 10 possible places to visit based on the ratings of the places. To add a personal touch the bot uses the information of the user's friends who visited and liked these places in order provide a concise list of places matching the user's tastes and interests. These could restaurants or sight-seeing places, etc. It shows the places and the user can select what to be on the list and what not and based on this final list it generates a google map showing the optimal route and order in which the places need to be visited enhancing the user's experience.
 
+## Flow of the Bot:
+
+| Hello World | Get Location |
+| --- | --- | --- |
+| ![User Login](/screenshots/howdy.jpg)  | ![Restaurant Search](/screenshots/location.jpg) |
+
+| Recommendation 1 | Recommendation 2 | ... | Recommendation n |
+| --- | --- | --- |--- |
+| ![Recommendation 1](/screenshots/reco1.jpg)  | ![Recommendation 2](/screenshots/reco2.jpg) | ... |  ![Recommendation n](/screenshots/recon.jpg) |
+
+| Summary 1 | Summary 2 | Route Map
+| --- | --- | --- |
+| ![Summary 1](/screenshots/summ1.jpg)  | ![Summary 2](/screenshots/summ2.jpg) | ![Route](/screenshots/map.jpg) | 
+
+
 ## How we built it
 We used various APIs made available by Facebook and Google. We built the bot using Java, Javascript, JSON and RESTful APIs, viz., google-maps-api, google-places-api, google-directions-api and facebook-graph-api.
 
@@ -19,14 +34,12 @@ The fact that realizing this idea and having working prototype is something we t
 ### What we learned
 Using the various APIs, learning their functionality and working by reading the documentations and integrating them with already known technologies like Java, JSON and Javascript.
 
-### What's next for TraVelocity
+### What's next ?
 The bot is still just a prototype and as of now it can deal with only one type of input data like restaurants or tourist places, etc. We would like to expand its capabilities so that it can take various types of input types and maybe plan a whole vacation for the user.
 
 ## Citations
 
 Some of the code snippets were taken from [Java-FbChatBot](https://github.com/thekosmix/Java-FbChatBot). Thanks [Siddharth Kumar](https://github.com/thekosmix)
-
-
 
 # API GUIDE
 

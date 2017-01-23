@@ -5,7 +5,7 @@
 <web-app>
 	<context-param>
 		<param-name>propertyFilePath</param-name>
-		<param-value>~/git/config/gatorknuckle.properties</param-value>
+		<param-value>C:\\Users\\Lavenger\\git\\config\\gatorknuckle.properties</param-value>
 	</context-param>
 	<servlet>
 		<servlet-name>WebHookServlet</servlet-name>
