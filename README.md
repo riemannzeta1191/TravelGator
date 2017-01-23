@@ -9,13 +9,19 @@ This FB messenger chatbot interacts with the user whenever it is prompted to by 
 
 ## Flow of the Bot:
 
+The user finds goes to our [Bot page](https://www.facebook.com/gatorknuckle/) and says hi to our bot. Bot will ask for location and user sends the location.
+
 | Hello World | Get Location |
 | --- | --- | --- |
 | ![User Login](/screenshots/howdy.jpg)  | ![Restaurant Search](/screenshots/location.jpg) |
 
+Bot receives the location and calls Google places API and crunches few locations to make a best recommendation for the user. 
+
 | Recommendation 1 | Recommendation 2 | ... | Recommendation n |
 | --- | --- | --- |--- |
 | ![Recommendation 1](/screenshots/reco1.jpg)  | ![Recommendation 2](/screenshots/reco2.jpg) | ... |  ![Recommendation n](/screenshots/recon.jpg) |
+
+After user accepts a certain number of locations, a summary is displayed to the user. Route Map shows the optimal route to cover all the destinations.
 
 | Summary 1 | Summary 2 | Route Map
 | --- | --- | --- |
