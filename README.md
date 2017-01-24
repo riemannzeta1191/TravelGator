@@ -21,7 +21,7 @@ Bot receives the location and calls Google places API and crunches few locations
 
 After user accepts a certain number of locations, a summary is displayed to the user. Route Map shows the optimal route to cover all the destinations.
 
-| Summary 1 | Summary 2 | Route Map
+| Summary  | Summary (Cont) | TSP Route
 | --- | --- | --- |
 | ![Summary 1](/screenshots/summ1.jpg)  | ![Summary 2](/screenshots/summ2.jpg) | ![Route](/screenshots/map.jpg) | 
 
